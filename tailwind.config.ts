@@ -24,6 +24,25 @@ export default {
 				ring: 'hsl(var(--ring))',
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
+				
+				// Deal Pipeline Colors
+				'surface-900': 'hsl(var(--color-surface-900))',
+				'surface-50': 'hsl(var(--color-surface-50))',
+				'surface-200': 'hsl(var(--color-surface-200))',
+				'primary-color': 'hsl(var(--color-primary-color))',
+				'button-outlined-primary': 'hsl(var(--button-outlined-primary-border-color))',
+				'inputtext-background': 'hsl(var(--inputtext-background))',
+				'inputtext-border': 'hsl(var(--inputtext-border-color))',
+				'inputtext-placeholder': 'hsl(var(--inputtext-placeholder-color))',
+				'iconfield-icon': 'hsl(var(--iconfield-icon-color))',
+				
+				// Badge Colors
+				'badge-success-bg': 'hsl(var(--badge-success-bg))',
+				'badge-success-text': 'hsl(var(--badge-success-text))',
+				'badge-info-bg': 'hsl(var(--badge-info-bg))',
+				'badge-info-text': 'hsl(var(--badge-info-text))',
+				'badge-default-bg': 'hsl(var(--badge-default-bg))',
+				'badge-default-text': 'hsl(var(--badge-default-text))',
 				primary: {
 					DEFAULT: 'hsl(var(--primary))',
 					foreground: 'hsl(var(--primary-foreground))'

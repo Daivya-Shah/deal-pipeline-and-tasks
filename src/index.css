@@ -10,6 +10,25 @@ All colors MUST be HSL.
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
+    
+    /* Deal Pipeline Custom Colors */
+    --color-surface-900: 222 84% 5%;
+    --color-surface-50: 210 40% 98%;
+    --color-surface-200: 214 32% 91%;
+    --color-primary-color: 207 100% 36%;
+    --button-outlined-primary-border-color: 200 100% 75%;
+    --inputtext-background: 0 0% 100%;
+    --inputtext-border-color: 218 11% 75%;
+    --inputtext-placeholder-color: 215 16% 47%;
+    --iconfield-icon-color: 215 28% 57%;
+    
+    /* Badge Colors */
+    --badge-success-bg: 152 68% 85%;
+    --badge-success-text: 150 86% 24%;
+    --badge-info-bg: 213 92% 90%;
+    --badge-info-text: 213 50% 37%;
+    --badge-default-bg: 0 0% 96%;
+    --badge-default-text: 0 0% 26%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;

@@ -145,7 +145,7 @@ const PipelineColumnComponent = ({ column }: { column: PipelineColumn }) => {
         <Badge variant="info">{column.totalSquareFootage}</Badge>
       </div>
       
-      <div className="flex flex-col gap-4 overflow-y-auto">
+      <div className="flex flex-col gap-4 overflow-y-auto no-scrollbar">
         {column.deals.map((deal) => (
           <DealCardComponent key={deal.id} deal={deal} />
         ))}
@@ -451,7 +451,7 @@ export default function DealPipeline() {
         <div className="text-2xl font-semibold text-surface-900 leading-[30px]">Deal Pipeline</div>
         <div className="w-[628px] flex items-center justify-end gap-4">
           <div className="flex-1 flex flex-col gap-1">
-            <div className="px-2 py-1 bg-inputtext-background shadow-sm border border-inputtext-border rounded-md flex items-center gap-2">
+            <div className="px-2 py-1 h-9 bg-inputtext-background shadow-sm border border-inputtext-border rounded-md flex items-center gap-2">
               <Search size={14} className="text-iconfield-icon" />
               <Input 
                 placeholder="Search board"

@@ -3,6 +3,22 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import {
+  DndContext,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+  UniqueIdentifier,
+} from "@dnd-kit/core";
+import {
+  useDraggable,
+  useDroppable,
+} from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import {
   Drawer,
   DrawerContent,
   DrawerTrigger,
@@ -25,6 +41,7 @@ interface DealCard {
   };
   hasActions?: boolean;
   isTemplate?: boolean;
+  isAngled?: boolean;
 }
 
 interface PipelineColumn {
@@ -150,24 +167,47 @@ const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const DealCardComponent = ({ deal }: { deal: DealCard }) => {
+const DealCardComponent = ({ deal, onCardClick }: { deal: DealCard, onCardClick?: (id: string) => void }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: deal.id,
+    disabled: !deal.isAngled,
+  });
+
+  const style = {
+    transform: CSS.Translate.toString(transform),
+  };
+
   if (deal.isTemplate) {
     return (
       <div 
-        className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+        ref={setNodeRef}
         style={{
           width: '270px',
           height: '160px',
           boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
           outline: '1px #DFE7EF solid',
-          outlineOffset: '-1px'
+          outlineOffset: '-1px',
+          transform: isDragging ? CSS.Translate.toString(transform) : (deal.isAngled ? 'rotate(8deg)' : 'none'),
+          transformOrigin: 'top left',
+          opacity: isDragging ? 0.5 : 1,
+          cursor: deal.isAngled ? 'grab' : 'pointer',
         }}
+        className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+        onClick={() => !deal.isAngled && onCardClick?.(deal.id)}
+        {...(deal.isAngled ? listeners : {})}
+        {...(deal.isAngled ? attributes : {})}
       >
         <div className="flex items-center gap-2">
           <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
           <TaskDrawer>
             <button className="cursor-pointer">
-              <MoreHorizontal size={12} className="text-[#111827]" />
+          <MoreHorizontal size={12} className="text-[#111827]" />
             </button>
           </TaskDrawer>
         </div>
@@ -221,20 +261,28 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
   
   return (
     <div 
-      className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+      ref={setNodeRef}
       style={{
         width: '270px',
         height: '160px',
         boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
         outline: '1px #DFE7EF solid',
-        outlineOffset: '-1px'
+        outlineOffset: '-1px',
+        transform: isDragging ? CSS.Translate.toString(transform) : (deal.isAngled ? 'rotate(8deg)' : 'none'),
+        transformOrigin: 'top left',
+        opacity: isDragging ? 0.5 : 1,
+        cursor: deal.isAngled ? 'grab' : 'pointer',
       }}
+      className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+      onClick={() => !deal.isAngled && onCardClick?.(deal.id)}
+      {...(deal.isAngled ? listeners : {})}
+      {...(deal.isAngled ? attributes : {})}
     >
       <div className="flex items-center gap-2">
         <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
         <TaskDrawer>
           <button className="cursor-pointer">
-            <MoreHorizontal size={12} className="text-[#111827]" />
+        <MoreHorizontal size={12} className="text-[#111827]" />
           </button>
         </TaskDrawer>
       </div>
@@ -319,11 +367,19 @@ const AngledCard = () => {
   );
 };
 
-const PipelineColumnComponent = ({ column }: { column: PipelineColumn }) => {
+const PipelineColumnComponent = ({ column, onCardClick }: { column: PipelineColumn, onCardClick?: (id: string) => void }) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: column.title,
+  });
+
   return (
     <div 
+      ref={setNodeRef}
       className="h-[932px] pt-4 px-4 bg-surface-50 rounded-2xl border border-surface-200 flex flex-col gap-4"
-      style={{ width: '302px' }}
+      style={{ 
+        width: '306px',
+        backgroundColor: isOver ? '#f0f9ff' : undefined,
+      }}
     >
       <div className="flex items-center justify-between">
         <div className="flex-1 flex items-center gap-2">
@@ -341,13 +397,13 @@ const PipelineColumnComponent = ({ column }: { column: PipelineColumn }) => {
         <Badge variant="info">{column.totalSquareFootage}</Badge>
       </div>
       
-      <div className="flex flex-col gap-4 overflow-y-auto overflow-x-hidden no-scrollbar">
+      <div className="flex flex-col items-center gap-4 overflow-y-auto no-scrollbar">
         {column.deals.map((deal) => (
-          <DealCardComponent key={deal.id} deal={deal} />
+          <DealCardComponent key={deal.id} deal={deal} onCardClick={onCardClick} />
         ))}
         {column.title === "Pitching" && <AngledCard />}
         {column.title === "Pitching" && (
-          <div className="h-40 px-4 py-3 bg-surface-200 rounded-lg"></div>
+          <div className="h-40 w-[270px] px-4 py-3 bg-surface-200 rounded-lg"></div>
         )}
       </div>
     </div>
@@ -355,7 +411,7 @@ const PipelineColumnComponent = ({ column }: { column: PipelineColumn }) => {
 };
 
 export default function DealPipeline() {
-  const pipelineData: PipelineColumn[] = [
+  const [pipelineData, setPipelineData] = useState<PipelineColumn[]>([
     {
       title: "Lead",
       count: 11,
@@ -639,7 +695,108 @@ export default function DealPipeline() {
         }
       ]
     }
-  ];
+  ]);
+
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const handleCardClick = (cardId: string) => {
+    setPipelineData(prevData => 
+      prevData.map(column => ({
+        ...column,
+        deals: column.deals.map(deal => 
+          deal.id === cardId 
+            ? { ...deal, isAngled: !deal.isAngled }
+            : deal
+        )
+      }))
+    );
+  };
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id);
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over) {
+      setActiveId(null);
+      return;
+    }
+
+    const draggedCardId = active.id as string;
+    const targetColumnTitle = over.id as string;
+
+    // Find the card being dragged
+    let draggedCard: DealCard | null = null;
+    let sourceColumnIndex = -1;
+    let sourceCardIndex = -1;
+
+    for (let i = 0; i < pipelineData.length; i++) {
+      const cardIndex = pipelineData[i].deals.findIndex(deal => deal.id === draggedCardId);
+      if (cardIndex !== -1) {
+        draggedCard = pipelineData[i].deals[cardIndex];
+        sourceColumnIndex = i;
+        sourceCardIndex = cardIndex;
+        break;
+      }
+    }
+
+    if (!draggedCard || !draggedCard.isAngled) {
+      setActiveId(null);
+      return;
+    }
+
+    // Find target column
+    const targetColumnIndex = pipelineData.findIndex(col => col.title === targetColumnTitle);
+    
+    if (targetColumnIndex === -1 || sourceColumnIndex === targetColumnIndex) {
+      setActiveId(null);
+      return;
+    }
+
+    // Move the card
+    setPipelineData(prevData => {
+      const newData = [...prevData];
+      
+      // Remove from source column
+      newData[sourceColumnIndex] = {
+        ...newData[sourceColumnIndex],
+        deals: newData[sourceColumnIndex].deals.filter(deal => deal.id !== draggedCardId),
+        count: newData[sourceColumnIndex].count - 1
+      };
+      
+      // Add to target column (make it normal, not angled)
+      const updatedCard = { ...draggedCard, isAngled: false };
+      newData[targetColumnIndex] = {
+        ...newData[targetColumnIndex],
+        deals: [...newData[targetColumnIndex].deals, updatedCard],
+        count: newData[targetColumnIndex].count + 1
+      };
+      
+      return newData;
+    });
+
+    setActiveId(null);
+  };
+
+  const findActiveCard = (): DealCard | null => {
+    if (!activeId) return null;
+    
+    for (const column of pipelineData) {
+      const card = column.deals.find(deal => deal.id === activeId);
+      if (card) return card;
+    }
+    return null;
+  };
 
   return (
     <div className="w-[1280px] flex flex-col gap-6">
@@ -668,11 +825,33 @@ export default function DealPipeline() {
       </div>
 
       {/* Pipeline Columns */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
       <div className="flex items-start gap-6">
         {pipelineData.map((column) => (
-          <PipelineColumnComponent key={column.title} column={column} />
+            <PipelineColumnComponent key={column.title} column={column} onCardClick={handleCardClick} />
         ))}
       </div>
+        
+        <DragOverlay>
+          {activeId ? (
+            <DealCardComponent 
+              deal={findActiveCard() || { 
+                id: '', 
+                title: '', 
+                category: '', 
+                contact: { name: '', timestamp: '' }, 
+                activity: { task: '', dueDate: '' },
+                isAngled: true 
+              }} 
+            />
+          ) : null}
+        </DragOverlay>
+      </DndContext>
     </div>
   );
 }

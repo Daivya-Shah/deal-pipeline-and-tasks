@@ -39,8 +39,6 @@ interface DealCard {
     task: string;
     dueDate: string;
   };
-  hasActions?: boolean;
-  isTemplate?: boolean;
   isAngled?: boolean;
 }
 
@@ -167,7 +165,7 @@ const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const DealCardComponent = ({ deal, onCardClick }: { deal: DealCard, onCardClick?: (id: string) => void }) => {
+const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, onCardClick?: (id: string) => void, showIcons?: boolean }) => {
   const {
     attributes,
     listeners,
@@ -176,69 +174,87 @@ const DealCardComponent = ({ deal, onCardClick }: { deal: DealCard, onCardClick?
     isDragging,
   } = useDraggable({
     id: deal.id,
-    disabled: !deal.isAngled,
+    disabled: false,
   });
 
   const style = {
     transform: CSS.Translate.toString(transform),
   };
 
-  if (deal.isTemplate) {
+  // Render shadow placeholder when card is angled
+  if (deal.isAngled) {
     return (
       <div 
-        ref={setNodeRef}
         style={{
           width: '270px',
-          height: '160px',
-          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
-          outline: '1px #DFE7EF solid',
-          outlineOffset: '-1px',
-          transform: isDragging ? CSS.Translate.toString(transform) : (deal.isAngled ? 'rotate(8deg)' : 'none'),
-          transformOrigin: 'top left',
-          opacity: isDragging ? 0.5 : 1,
-          cursor: deal.isAngled ? 'grab' : 'pointer',
+          height: showIcons ? '226px' : '160px',
+          position: 'relative',
         }}
-        className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
-        onClick={() => !deal.isAngled && onCardClick?.(deal.id)}
-        {...(deal.isAngled ? listeners : {})}
-        {...(deal.isAngled ? attributes : {})}
       >
-        <div className="flex items-center gap-2">
-          <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
-          <TaskDrawer>
-            <button className="cursor-pointer">
-          <MoreHorizontal size={12} className="text-[#111827]" />
-            </button>
-          </TaskDrawer>
+        {/* Shadow placeholder - takes up space in layout */}
+        <div 
+          style={{
+            width: '270px',
+            height: showIcons ? '226px' : '160px',
+            borderRadius: '8px',
+          }}
+          className="bg-surface-200"
+        >
         </div>
         
+        {/* Actual tilted card - absolutely positioned so it doesn't affect layout */}
+        <div 
+          ref={setNodeRef}
+          style={{
+            width: '270px',
+            height: showIcons ? '226px' : '160px',
+            boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
+            outline: '1px #DFE7EF solid',
+            outlineOffset: '-1px',
+            transform: isDragging ? CSS.Translate.toString(transform) : 'rotate(8deg)',
+            transformOrigin: 'top left',
+            opacity: isDragging ? 0 : 1,
+            cursor: 'grab',
+            zIndex: 1000,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+          }}
+          className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+          onClick={() => onCardClick?.(deal.id)}
+          {...listeners}
+          {...attributes}
+        >
         <div className="flex items-center gap-2">
-          <Badge variant="success">{deal.value || "New"}</Badge>
-          <Badge variant="info">{deal.squareFootage || "75K SF"}</Badge>
-          <Badge variant="default">{deal.category}</Badge>
+            <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
+            <TaskDrawer>
+              <button className="cursor-pointer">
+                <MoreHorizontal size={12} className="text-[#111827]" />
+              </button>
+            </TaskDrawer>
         </div>
         
-        {deal.description && (
-          <div className="text-xs text-surface-900 leading-[18px]">
-            {deal.description}
+          <div className="flex items-center gap-2">
+            {deal.value && <Badge variant="success">{deal.value}</Badge>}
+            {deal.squareFootage && <Badge variant="info">{deal.squareFootage}</Badge>}
+            <Badge variant="default">{deal.category}</Badge>
           </div>
-        )}
         
         <div className="flex flex-col">
-          <div 
-            className="p-2 bg-white rounded-[6px] flex items-center justify-between"
-            style={{
-              outline: '1px #DFE7EF solid',
-              outlineOffset: '-1px'
-            }}
-          >
+            <div 
+              className="p-2 bg-white rounded-[6px] flex items-center justify-between"
+              style={{
+                outline: '1px #DFE7EF solid',
+                outlineOffset: '-1px'
+              }}
+            >
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
               <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.contact.name}</div>
             </div>
             <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
           </div>
-          <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-[6px] flex items-center justify-between">
+            <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-[6px] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock size={12} className="text-[#9CA3AF]" />
               <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>
@@ -247,7 +263,7 @@ const DealCardComponent = ({ deal, onCardClick }: { deal: DealCard, onCardClick?
           </div>
         </div>
         
-        {deal.hasActions && (
+          {showIcons && (
           <div className="pt-2 px-6 relative flex items-center justify-between">
             <Mail size={16} className="text-[#111827]" />
             <Phone size={16} className="text-[#111827]" />
@@ -255,28 +271,32 @@ const DealCardComponent = ({ deal, onCardClick }: { deal: DealCard, onCardClick?
             <div className="absolute right-0 top-1.5 w-1 h-1 bg-[#026BB6] rounded-full"></div>
           </div>
         )}
+        </div>
       </div>
     );
   }
+
+
   
   return (
     <div 
       ref={setNodeRef}
       style={{
         width: '270px',
-        height: '160px',
+        height: showIcons ? '226px' : '160px',
+        minHeight: showIcons ? '226px' : '160px',
         boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
         outline: '1px #DFE7EF solid',
         outlineOffset: '-1px',
         transform: isDragging ? CSS.Translate.toString(transform) : (deal.isAngled ? 'rotate(8deg)' : 'none'),
         transformOrigin: 'top left',
-        opacity: isDragging ? 0.5 : 1,
-        cursor: deal.isAngled ? 'grab' : 'pointer',
+        opacity: isDragging ? 0 : 1,
+        cursor: 'grab',
       }}
       className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
-      onClick={() => !deal.isAngled && onCardClick?.(deal.id)}
-      {...(deal.isAngled ? listeners : {})}
-      {...(deal.isAngled ? attributes : {})}
+      onClick={() => onCardClick?.(deal.id)}
+      {...listeners}
+      {...attributes}
     >
       <div className="flex items-center gap-2">
         <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
@@ -315,30 +335,50 @@ const DealCardComponent = ({ deal, onCardClick }: { deal: DealCard, onCardClick?
           <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
         </div>
       </div>
+      
+      {showIcons && (
+        <div className="pt-2 px-6 relative flex items-center justify-between">
+          <Mail size={16} className="text-[#111827]" />
+          <Phone size={16} className="text-[#111827]" />
+          <Edit size={16} className="text-[#111827]" />
+          <div className="absolute right-0 top-1.5 w-1 h-1 bg-[#026BB6] rounded-full"></div>
+        </div>
+      )}
     </div>
   );
 };
 
-const AngledCard = () => {
+// Clean card component for drag overlay (no shadow placeholder)
+const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: boolean }) => {
   return (
     <div 
-      className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
       style={{
-        width: '289.64px',
-        transform: 'rotate(8deg)',
-        transformOrigin: 'top left',
+        width: '270px',
+        height: showIcons ? '226px' : '160px',
+        minHeight: showIcons ? '226px' : '160px',
         boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
         outline: '1px #DFE7EF solid',
-        outlineOffset: '-1px'
+        outlineOffset: '-1px',
+        transform: 'rotate(8deg)',
+        transformOrigin: 'top left',
+        cursor: 'grab',
+        zIndex: 1000,
       }}
+      className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
     >
       <div className="flex items-center gap-2">
-        <div className="flex-1 text-[14px] font-semibold text-[#111827]">Altair Renewal</div>
-        <div className="w-[13.55px] h-[13.55px]"></div>
+        <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
+        <TaskDrawer>
+          <button className="cursor-pointer">
+            <MoreHorizontal size={12} className="text-[#111827]" />
+          </button>
+        </TaskDrawer>
       </div>
       
       <div className="flex items-center gap-2">
-        <Badge variant="default">Technology</Badge>
+        {deal.value && <Badge variant="success">{deal.value}</Badge>}
+        {deal.squareFootage && <Badge variant="info">{deal.squareFootage}</Badge>}
+        <Badge variant="default">{deal.category}</Badge>
       </div>
       
       <div className="flex flex-col">
@@ -350,24 +390,33 @@ const AngledCard = () => {
           }}
         >
           <div className="flex items-center gap-2">
-            <div className="w-[13.55px] h-[13.55px] bg-[#9CA3AF] rounded-full"></div>
-            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">Raj Patel</div>
+            <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
+            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.contact.name}</div>
           </div>
-          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">2 weeks ago</div>
+          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
         </div>
         <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-[6px] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-[13.55px] h-[13.55px]"></div>
-            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">Review options</div>
+            <Clock size={12} className="text-[#9CA3AF]" />
+            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>
           </div>
-          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">in 1 week</div>
+          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
         </div>
       </div>
+      
+      {showIcons && (
+        <div className="pt-2 px-6 relative flex items-center justify-between">
+          <Mail size={16} className="text-[#111827]" />
+          <Phone size={16} className="text-[#111827]" />
+          <Edit size={16} className="text-[#111827]" />
+          <div className="absolute right-0 top-1.5 w-1 h-1 bg-[#026BB6] rounded-full"></div>
+        </div>
+      )}
     </div>
   );
 };
 
-const PipelineColumnComponent = ({ column, onCardClick }: { column: PipelineColumn, onCardClick?: (id: string) => void }) => {
+const PipelineColumnComponent = ({ column, onCardClick, showIcons }: { column: PipelineColumn, onCardClick?: (id: string) => void, showIcons?: boolean }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: column.title,
   });
@@ -399,22 +448,25 @@ const PipelineColumnComponent = ({ column, onCardClick }: { column: PipelineColu
       
       <div className="flex flex-col items-center gap-4 overflow-y-auto no-scrollbar">
         {column.deals.map((deal) => (
-          <DealCardComponent key={deal.id} deal={deal} onCardClick={onCardClick} />
+          <DealCardComponent 
+            key={deal.id} 
+            deal={deal} 
+            onCardClick={onCardClick}
+            showIcons={showIcons}
+          />
         ))}
-        {column.title === "Pitching" && <AngledCard />}
-        {column.title === "Pitching" && (
-          <div className="h-40 w-[270px] px-4 py-3 bg-surface-200 rounded-lg"></div>
-        )}
+
+
       </div>
     </div>
   );
 };
 
-export default function DealPipeline() {
+export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   const [pipelineData, setPipelineData] = useState<PipelineColumn[]>([
     {
       title: "Lead",
-      count: 11,
+      count: 5,
       totalValue: "$4.2M",
       totalSquareFootage: "75K SF",
       deals: [
@@ -452,42 +504,6 @@ export default function DealPipeline() {
           category: "Legal",
           contact: { name: "Thomas Percy", timestamp: "3 months ago" },
           activity: { task: "Follow-up", dueDate: "in 1 week" }
-        },
-        {
-          id: "6",
-          title: "Title",
-          value: "New",
-          squareFootage: "75K SF", 
-          category: "Technology",
-          description: "Short description text",
-          contact: { name: "John Smith", timestamp: "3 mo" },
-          activity: { task: "Series C funding", dueDate: "yesterday" },
-          hasActions: true,
-          isTemplate: true
-        },
-        {
-          id: "7",
-          title: "Title",
-          value: "New",
-          squareFootage: "75K SF",
-          category: "Technology", 
-          description: "Short description text",
-          contact: { name: "John Smith", timestamp: "3 mo" },
-          activity: { task: "Series C funding", dueDate: "yesterday" },
-          hasActions: true,
-          isTemplate: true
-        },
-        {
-          id: "8",
-          title: "Title",
-          value: "New", 
-          squareFootage: "75K SF",
-          category: "Technology",
-          description: "Short description text",
-          contact: { name: "John Smith", timestamp: "3 mo" },
-          activity: { task: "Series C funding", dueDate: "yesterday" },
-          hasActions: true,
-          isTemplate: true
         }
       ]
     },
@@ -567,48 +583,12 @@ export default function DealPipeline() {
           category: "Technology",
           contact: { name: "Ellen Vidal", timestamp: "2 weeks ago" },
           activity: { task: "Verify spaces", dueDate: "in 2 weeks" }
-        },
-        {
-          id: "16",
-          title: "Title",
-          value: "New",
-          squareFootage: "75K SF",
-          category: "Technology",
-          description: "Short description text", 
-          contact: { name: "John Smith", timestamp: "3 mo" },
-          activity: { task: "Series C funding", dueDate: "yesterday" },
-          hasActions: true,
-          isTemplate: true
-        },
-        {
-          id: "17",
-          title: "Title",
-          value: "New",
-          squareFootage: "75K SF",
-          category: "Technology",
-          description: "Short description text",
-          contact: { name: "John Smith", timestamp: "3 mo" },
-          activity: { task: "Series C funding", dueDate: "yesterday" },
-          hasActions: true,
-          isTemplate: true
-        },
-        {
-          id: "18",
-          title: "Title",
-          value: "New", 
-          squareFootage: "75K SF",
-          category: "Technology",
-          description: "Short description text",
-          contact: { name: "John Smith", timestamp: "3 mo" },
-          activity: { task: "Series C funding", dueDate: "yesterday" },
-          hasActions: true,
-          isTemplate: true
         }
       ]
     },
     {
       title: "Closed",
-      count: 6,
+      count: 5,
       totalValue: "$3.7M",
       totalSquareFootage: "62K SF",
       deals: [
@@ -656,42 +636,6 @@ export default function DealPipeline() {
           category: "Finance",
           contact: { name: "Betty DiPaolo", timestamp: "1 month ago" },
           activity: { task: "Expansion option", dueDate: "in 2 weeks" }
-        },
-        {
-          id: "24",
-          title: "Title",
-          value: "New",
-          squareFootage: "75K SF",
-          category: "Technology", 
-          description: "Short description text",
-          contact: { name: "John Smith", timestamp: "3 mo" },
-          activity: { task: "Series C funding", dueDate: "yesterday" },
-          hasActions: true,
-          isTemplate: true
-        },
-        {
-          id: "25",
-          title: "Title",
-          value: "New",
-          squareFootage: "75K SF",
-          category: "Technology",
-          description: "Short description text",
-          contact: { name: "John Smith", timestamp: "3 mo" },
-          activity: { task: "Series C funding", dueDate: "yesterday" },
-          hasActions: true,
-          isTemplate: true
-        },
-        {
-          id: "26",
-          title: "Title",
-          value: "New",
-          squareFootage: "75K SF", 
-          category: "Technology",
-          description: "Short description text",
-          contact: { name: "John Smith", timestamp: "3 mo" },
-          activity: { task: "Series C funding", dueDate: "yesterday" },
-          hasActions: true,
-          isTemplate: true
         }
       ]
     }
@@ -708,20 +652,38 @@ export default function DealPipeline() {
   );
 
   const handleCardClick = (cardId: string) => {
-    setPipelineData(prevData => 
+    setPipelineData(prevData =>
       prevData.map(column => ({
         ...column,
-        deals: column.deals.map(deal => 
-          deal.id === cardId 
-            ? { ...deal, isAngled: !deal.isAngled }
-            : deal
-        )
+        deals: column.deals.map(deal => {
+          if (deal.id === cardId) {
+            // Toggle the clicked card
+            return { ...deal, isAngled: !deal.isAngled };
+          }
+          // Un-tilt every other card
+          return { ...deal, isAngled: false };
+        })
       }))
     );
   };
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id);
+    
+    // Automatically angle the card when drag starts
+    const cardId = event.active.id as string;
+    setPipelineData(prevData =>
+      prevData.map(column => ({
+        ...column,
+        deals: column.deals.map(deal => {
+          if (deal.id === cardId) {
+            return { ...deal, isAngled: true };
+          }
+          // Un-tilt every other card
+          return { ...deal, isAngled: false };
+        })
+      }))
+    );
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -833,21 +795,21 @@ export default function DealPipeline() {
       >
       <div className="flex items-start gap-6">
         {pipelineData.map((column) => (
-            <PipelineColumnComponent key={column.title} column={column} onCardClick={handleCardClick} />
+            <PipelineColumnComponent key={column.title} column={column} onCardClick={handleCardClick} showIcons={showIcons} />
         ))}
       </div>
         
         <DragOverlay>
           {activeId ? (
-            <DealCardComponent 
+            <DragCardComponent 
               deal={findActiveCard() || { 
                 id: '', 
                 title: '', 
                 category: '', 
                 contact: { name: '', timestamp: '' }, 
-                activity: { task: '', dueDate: '' },
-                isAngled: true 
+                activity: { task: '', dueDate: '' }
               }} 
+              showIcons={showIcons}
             />
           ) : null}
         </DragOverlay>

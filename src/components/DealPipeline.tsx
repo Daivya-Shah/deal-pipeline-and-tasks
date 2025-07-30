@@ -72,7 +72,7 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
             </div>
             <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
           </div>
-          <div className="px-2 py-3 bg-[#F9FAFB] rounded-b-md flex items-center justify-between">
+        <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-md flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock size={12} className="text-[#9CA3AF]" />
               <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>
@@ -114,7 +114,7 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
           </div>
           <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
         </div>
-        <div className="px-2 py-3 bg-[#F9FAFB] rounded-b-md flex items-center justify-between">
+        <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-md flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock size={12} className="text-[#9CA3AF]" />
             <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>

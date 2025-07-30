@@ -271,9 +271,60 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
   );
 };
 
+const AngledCard = () => {
+  return (
+    <div 
+      className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+      style={{
+        width: '289.64px',
+        transform: 'rotate(8deg)',
+        transformOrigin: 'top left',
+        boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
+        outline: '1px #DFE7EF solid',
+        outlineOffset: '-1px'
+      }}
+    >
+      <div className="flex items-center gap-2">
+        <div className="flex-1 text-[14px] font-semibold text-[#111827]">Altair Renewal</div>
+        <div className="w-[13.55px] h-[13.55px]"></div>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Badge variant="default">Technology</Badge>
+      </div>
+      
+      <div className="flex flex-col">
+        <div 
+          className="p-2 bg-white rounded-[6px] flex items-center justify-between"
+          style={{
+            outline: '1px #DFE7EF solid',
+            outlineOffset: '-1px'
+          }}
+        >
+          <div className="flex items-center gap-2">
+            <div className="w-[13.55px] h-[13.55px] bg-[#9CA3AF] rounded-full"></div>
+            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">Raj Patel</div>
+          </div>
+          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">2 weeks ago</div>
+        </div>
+        <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-[6px] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-[13.55px] h-[13.55px]"></div>
+            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">Review options</div>
+          </div>
+          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">in 1 week</div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PipelineColumnComponent = ({ column }: { column: PipelineColumn }) => {
   return (
-    <div className="flex-1 h-[932px] pt-4 px-4 bg-surface-50 rounded-2xl border border-surface-200 flex flex-col gap-4 overflow-hidden">
+    <div 
+      className="h-[932px] pt-4 px-4 bg-surface-50 rounded-2xl border border-surface-200 flex flex-col gap-4"
+      style={{ width: '302px' }}
+    >
       <div className="flex items-center justify-between">
         <div className="flex-1 flex items-center gap-2">
           <div className="text-base font-semibold text-[#111827] leading-6">{column.title}</div>
@@ -290,10 +341,11 @@ const PipelineColumnComponent = ({ column }: { column: PipelineColumn }) => {
         <Badge variant="info">{column.totalSquareFootage}</Badge>
       </div>
       
-      <div className="flex flex-col gap-4 overflow-y-auto no-scrollbar">
+      <div className="flex flex-col gap-4 overflow-y-auto overflow-x-hidden no-scrollbar">
         {column.deals.map((deal) => (
           <DealCardComponent key={deal.id} deal={deal} />
         ))}
+        {column.title === "Pitching" && <AngledCard />}
         {column.title === "Pitching" && (
           <div className="h-40 px-4 py-3 bg-surface-200 rounded-lg"></div>
         )}

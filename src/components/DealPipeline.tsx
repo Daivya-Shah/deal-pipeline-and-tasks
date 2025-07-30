@@ -33,11 +33,11 @@ const Badge = ({ variant, children }: { variant: 'success' | 'info' | 'default',
   const variants = {
     success: 'bg-badge-success-bg text-badge-success-text',
     info: 'bg-badge-info-bg text-badge-info-text',
-    default: 'bg-badge-default-bg text-badge-default-text'
+    default: 'bg-[#F5F5F5] text-[#424242]'
   };
   
   return (
-    <div className={`px-[5.6px] py-[3.5px] rounded-md text-[10.5px] font-semibold leading-[15.75px] ${variants[variant]}`}>
+    <div className={`px-[5.6px] py-[3.5px] rounded-[6px] text-[10.5px] font-semibold leading-[15.75px] ${variants[variant]}`}>
       {children}
     </div>
   );
@@ -46,9 +46,16 @@ const Badge = ({ variant, children }: { variant: 'success' | 'info' | 'default',
 const DealCardComponent = ({ deal }: { deal: DealCard }) => {
   if (deal.isTemplate) {
     return (
-      <div className="p-4 bg-white shadow-sm rounded-lg border border-[#DFE7EF] flex flex-col gap-3">
+      <div 
+        className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+        style={{
+          boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
+          outline: '1px #DFE7EF solid',
+          outlineOffset: '-1px'
+        }}
+      >
         <div className="flex items-center gap-2">
-          <div className="flex-1 text-sm font-semibold text-[#111827]">{deal.title}</div>
+          <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
           <MoreHorizontal size={12} className="text-[#111827]" />
         </div>
         
@@ -65,14 +72,20 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
         )}
         
         <div className="flex flex-col">
-          <div className="p-2 bg-white border border-[#DFE7EF] rounded-md flex items-center justify-between">
+          <div 
+            className="p-2 bg-white rounded-[6px] flex items-center justify-between"
+            style={{
+              outline: '1px #DFE7EF solid',
+              outlineOffset: '-1px'
+            }}
+          >
             <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
               <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.contact.name}</div>
             </div>
             <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
           </div>
-        <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-md flex items-center justify-between">
+          <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-[6px] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock size={12} className="text-[#9CA3AF]" />
               <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>
@@ -94,9 +107,16 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
   }
   
   return (
-    <div className="p-4 bg-white shadow-sm rounded-lg border border-[#DFE7EF] flex flex-col gap-3">
+    <div 
+      className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+      style={{
+        boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
+        outline: '1px #DFE7EF solid',
+        outlineOffset: '-1px'
+      }}
+    >
       <div className="flex items-center gap-2">
-        <div className="flex-1 text-sm font-semibold text-[#111827]">{deal.title}</div>
+        <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
         <MoreHorizontal size={12} className="text-[#111827]" />
       </div>
       
@@ -107,14 +127,20 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
       </div>
       
       <div className="flex flex-col">
-        <div className="p-2 bg-white border border-[#DFE7EF] rounded-md flex items-center justify-between">
+        <div 
+          className="p-2 bg-white rounded-[6px] flex items-center justify-between"
+          style={{
+            outline: '1px #DFE7EF solid',
+            outlineOffset: '-1px'
+          }}
+        >
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
             <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.contact.name}</div>
           </div>
           <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
         </div>
-        <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-md flex items-center justify-between">
+        <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-[6px] flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock size={12} className="text-[#9CA3AF]" />
             <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>

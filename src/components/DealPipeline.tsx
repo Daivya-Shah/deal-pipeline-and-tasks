@@ -803,7 +803,9 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
 
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [columnIdCounter, setColumnIdCounter] = useState(5); // Start from 5 since we have 4 initial columns
   const pipelineRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   // Handle click outside to reset angled cards
   useEffect(() => {
@@ -958,6 +960,34 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     return null;
   };
 
+  const handleAddColumn = () => {
+    const newColumn: PipelineColumn = {
+      title: `Column ${columnIdCounter}`,
+      count: 0,
+      totalValue: "$0",
+      totalSquareFootage: "0 SF",
+      deals: []
+    };
+    
+    setPipelineData(prev => [...prev, newColumn]);
+    setColumnIdCounter(prev => prev + 1);
+    
+    // Auto-scroll to show the new column after a short delay to ensure DOM update
+    setTimeout(() => {
+      if (scrollContainerRef.current) {
+        const container = scrollContainerRef.current;
+        const newColumnPosition = (pipelineData.length) * (306 + 24); // New column position
+        const containerWidth = container.clientWidth;
+        const scrollLeft = newColumnPosition - containerWidth + 306; // Show the new column fully
+        
+        container.scrollTo({
+          left: Math.max(0, scrollLeft),
+          behavior: 'smooth'
+        });
+      }
+    }, 50);
+  };
+
   // Filter pipeline data based on search query
   const filteredPipelineData = pipelineData.map(column => ({
     ...column,
@@ -970,7 +1000,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   }));
 
   return (
-    <div ref={pipelineRef} className="w-[1280px] flex flex-col gap-6">
+    <div ref={pipelineRef} className="flex flex-col gap-6" style={{ width: `${4 * 306 + 3 * 24}px` }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="text-2xl font-semibold text-surface-900 leading-[30px]">Deal Pipeline</div>
@@ -993,6 +1023,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
             variant="outline" 
             size="sm"
             className="px-2 py-1 rounded-md border-button-outlined-primary text-primary-color hover:bg-primary-color/10"
+            onClick={handleAddColumn}
           >
             <Plus size={14} />
             Add column
@@ -1007,10 +1038,12 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-      <div className="flex items-start gap-6">
-        {filteredPipelineData.map((column) => (
-            <PipelineColumnComponent key={column.title} column={column} onCardClick={handleCardClick} showIcons={showIcons} />
-        ))}
+      <div ref={scrollContainerRef} className="w-full overflow-x-auto overflow-y-visible no-scrollbar">
+        <div className="flex items-start gap-6" style={{ width: `${filteredPipelineData.length * 306 + (filteredPipelineData.length - 1) * 24}px`, minWidth: `${4 * 306 + 3 * 24}px` }}>
+          {filteredPipelineData.map((column, index) => (
+              <PipelineColumnComponent key={`${column.title}-${index}`} column={column} onCardClick={handleCardClick} showIcons={showIcons} />
+          ))}
+        </div>
       </div>
         
         <DragOverlay>

@@ -1,6 +1,12 @@
-import { Search, Plus, MoreHorizontal, Edit, Mail, Phone, Clock } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Edit, Mail, Phone, Clock, X, User, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 interface DealCard {
   id: string;
@@ -43,12 +49,115 @@ const Badge = ({ variant, children }: { variant: 'success' | 'info' | 'default',
   );
 };
 
+const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <Drawer>
+      <DrawerTrigger asChild>
+        {children}
+      </DrawerTrigger>
+      <DrawerContent 
+        className="fixed inset-y-0 right-0 h-full data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
+        style={{ width: '481px' }}
+      >
+        <div style={{ width: '481px', height: '1024px', background: '#F8FAFC', boxShadow: '4px 20px 50px -12px rgba(13, 13, 18, 0.12)', overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'inline-flex' }}>
+          {/* Header */}
+          <div style={{ alignSelf: 'stretch', paddingTop: '16px', paddingBottom: '16px', background: 'white', borderBottom: '1px #DFE7EF solid', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '8px', display: 'flex' }}>
+            <div style={{ alignSelf: 'stretch', paddingLeft: '24px', paddingRight: '24px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
+              <div style={{ flex: '1 1 0', alignSelf: 'stretch', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'flex' }}>
+                <div style={{ color: '#0F172A', fontSize: '20px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '25px', wordWrap: 'break-word' }}>Add Task</div>
+              </div>
+              <div style={{ width: '32px', height: '32px', paddingTop: '8px', paddingBottom: '8px', borderRadius: '6px', outline: '1px #E2E8F0 solid', outlineOffset: '-1px', justifyContent: 'center', alignItems: 'center', display: 'flex', cursor: 'pointer' }}>
+                <X size={16} style={{ color: '#64748B' }} />
+              </div>
+            </div>
+          </div>
+          
+          {/* Content */}
+          <div style={{ alignSelf: 'stretch', flex: '1 1 0', padding: '24px', overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '24px', display: 'flex' }}>
+            {/* Task Name */}
+            <div style={{ alignSelf: 'stretch', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
+              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Task Name *</div>
+              <div style={{ alignSelf: 'stretch', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
+                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', display: 'inline-flex' }}>
+                  <div style={{ alignSelf: 'stretch', overflow: 'hidden', justifyContent: 'flex-start', alignItems: 'center', display: 'inline-flex' }}>
+                    <input 
+                      placeholder="Enter a unique name"
+                      style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Assignee */}
+            <div style={{ alignSelf: 'stretch', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
+              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Assignee *</div>
+              <div style={{ alignSelf: 'stretch', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
+                <User size={16} style={{ color: '#94A3B8' }} />
+                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', display: 'inline-flex' }}>
+                  <div style={{ alignSelf: 'stretch', overflow: 'hidden', justifyContent: 'flex-start', alignItems: 'center', display: 'inline-flex' }}>
+                    <input 
+                      placeholder="Who is getting this done?"
+                      style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Company */}
+            <div style={{ alignSelf: 'stretch', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
+              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Company</div>
+              <div style={{ alignSelf: 'stretch', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
+                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', display: 'inline-flex' }}>
+                  <div style={{ alignSelf: 'stretch', overflow: 'hidden', justifyContent: 'flex-start', alignItems: 'center', display: 'inline-flex' }}>
+                    <input 
+                      placeholder="Add the client or prospect this task relates to"
+                      style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Due Date */}
+            <div style={{ alignSelf: 'stretch', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
+              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Due Date *</div>
+              <div style={{ alignSelf: 'stretch', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
+                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', display: 'inline-flex' }}>
+                  <input 
+                    type="date"
+                    style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none' }}
+                  />
+                </div>
+                <Calendar size={16} style={{ color: '#94A3B8' }} />
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div style={{ width: '479px', paddingLeft: '24px', paddingRight: '24px', paddingTop: '16px', paddingBottom: '16px', background: 'white', borderTop: '1px #DFE1E6 solid', justifyContent: 'flex-end', alignItems: 'center', gap: '16px', display: 'inline-flex' }}>
+            <div style={{ paddingLeft: '16px', paddingRight: '16px', paddingTop: '8px', paddingBottom: '8px', borderRadius: '6px', outline: '1px #7AC8FF solid', outlineOffset: '-1px', justifyContent: 'center', alignItems: 'center', gap: '8px', display: 'flex', cursor: 'pointer' }}>
+              <div style={{ color: '#006BB6', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Cancel</div>
+            </div>
+            <div style={{ paddingLeft: '16px', paddingRight: '16px', paddingTop: '8px', paddingBottom: '8px', opacity: 0.70, background: '#F1F5F9', borderRadius: '6px', outline: '1px #F1F5F9 solid', outlineOffset: '-1px', justifyContent: 'center', alignItems: 'center', gap: '8px', display: 'flex' }}>
+              <div style={{ color: '#475569', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Save</div>
+            </div>
+          </div>
+        </div>
+      </DrawerContent>
+    </Drawer>
+  );
+};
+
 const DealCardComponent = ({ deal }: { deal: DealCard }) => {
   if (deal.isTemplate) {
     return (
       <div 
         className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
         style={{
+          width: '270px',
+          height: '160px',
           boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
           outline: '1px #DFE7EF solid',
           outlineOffset: '-1px'
@@ -56,7 +165,11 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
       >
         <div className="flex items-center gap-2">
           <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
-          <MoreHorizontal size={12} className="text-[#111827]" />
+          <TaskDrawer>
+            <button className="cursor-pointer">
+              <MoreHorizontal size={12} className="text-[#111827]" />
+            </button>
+          </TaskDrawer>
         </div>
         
         <div className="flex items-center gap-2">
@@ -110,6 +223,8 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
     <div 
       className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
       style={{
+        width: '270px',
+        height: '160px',
         boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
         outline: '1px #DFE7EF solid',
         outlineOffset: '-1px'
@@ -117,7 +232,11 @@ const DealCardComponent = ({ deal }: { deal: DealCard }) => {
     >
       <div className="flex items-center gap-2">
         <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
-        <MoreHorizontal size={12} className="text-[#111827]" />
+        <TaskDrawer>
+          <button className="cursor-pointer">
+            <MoreHorizontal size={12} className="text-[#111827]" />
+          </button>
+        </TaskDrawer>
       </div>
       
       <div className="flex items-center gap-2">

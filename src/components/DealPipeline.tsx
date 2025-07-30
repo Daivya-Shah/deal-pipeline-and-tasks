@@ -1,7 +1,7 @@
 import { Search, Plus, MoreHorizontal, Edit, Mail, Phone, Clock, X, User, Calendar } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -166,6 +166,7 @@ const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
 };
 
 const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, onCardClick?: (id: string) => void, showIcons?: boolean }) => {
+  const cardRef = useRef<HTMLDivElement>(null);
   const {
     attributes,
     listeners,
@@ -181,10 +182,22 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
     transform: CSS.Translate.toString(transform),
   };
 
+  // Calculate position for angled card to appear above everything
+  const getFixedPosition = () => {
+    if (!cardRef.current) return { top: 0, left: 0 };
+    const rect = cardRef.current.getBoundingClientRect();
+    return {
+      top: rect.top,
+      left: rect.left,
+    };
+  };
+
   // Render shadow placeholder when card is angled
   if (deal.isAngled) {
+    const fixedPos = getFixedPosition();
     return (
       <div 
+        ref={cardRef}
         style={{
           width: '270px',
           height: showIcons ? '226px' : '160px',
@@ -202,7 +215,7 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
         >
         </div>
         
-        {/* Actual tilted card - absolutely positioned so it doesn't affect layout */}
+        {/* Actual tilted card - fixed positioned to appear above everything */}
         <div 
           ref={setNodeRef}
           style={{
@@ -215,12 +228,13 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
             transformOrigin: 'top left',
             opacity: isDragging ? 0 : 1,
             cursor: 'grab',
-            zIndex: 1000,
-            position: 'absolute',
-            top: 0,
-            left: 0,
+            zIndex: 9999,
+            position: 'fixed',
+            top: `${fixedPos.top}px`,
+            left: `${fixedPos.left}px`,
           }}
           className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+          data-card-id={deal.id}
           onClick={() => onCardClick?.(deal.id)}
           {...listeners}
           {...attributes}
@@ -280,7 +294,12 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
   
   return (
     <div 
-      ref={setNodeRef}
+      ref={(node) => {
+        setNodeRef(node);
+        if (cardRef.current === null) {
+          cardRef.current = node;
+        }
+      }}
       style={{
         width: '270px',
         height: showIcons ? '226px' : '160px',
@@ -294,6 +313,7 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
         cursor: 'grab',
       }}
       className="p-4 bg-white rounded-[8px] flex flex-col gap-3"
+      data-card-id={deal.id}
       onClick={() => onCardClick?.(deal.id)}
       {...listeners}
       {...attributes}
@@ -642,6 +662,43 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   ]);
 
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const pipelineRef = useRef<HTMLDivElement>(null);
+  
+  // Handle click outside to reset angled cards
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      
+      // Don't reset if clicking outside the pipeline
+      if (pipelineRef.current && !pipelineRef.current.contains(target)) {
+        // Reset all angled cards
+        setPipelineData(prevData =>
+          prevData.map(column => ({
+            ...column,
+            deals: column.deals.map(deal => ({ ...deal, isAngled: false }))
+          }))
+        );
+      }
+      // Don't reset if clicking on a card (let card's onClick handle it)
+      else if (target.closest('[data-card-id]')) {
+        return;
+      }
+      // Reset if clicking on empty space within the pipeline
+      else if (pipelineRef.current && pipelineRef.current.contains(target)) {
+        setPipelineData(prevData =>
+          prevData.map(column => ({
+            ...column,
+            deals: column.deals.map(deal => ({ ...deal, isAngled: false }))
+          }))
+        );
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -761,7 +818,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   };
 
   return (
-    <div className="w-[1280px] flex flex-col gap-6">
+    <div ref={pipelineRef} className="w-[1280px] flex flex-col gap-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="text-2xl font-semibold text-surface-900 leading-[30px]">Deal Pipeline</div>

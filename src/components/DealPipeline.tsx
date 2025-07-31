@@ -24,10 +24,10 @@ import {
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  Drawer,
-  DrawerContent,
-  DrawerTrigger,
-} from "@/components/ui/drawer";
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 interface DealCard {
   id: string;
@@ -70,24 +70,21 @@ const Badge = ({ variant, children }: { variant: 'success' | 'info' | 'default',
 };
 
 const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
-    return (
-    <Drawer>
-      <DrawerTrigger asChild>
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
         {children}
-      </DrawerTrigger>
-      <DrawerContent 
-        className="fixed inset-y-0 right-0 h-full data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right"
-        style={{ width: '481px' }}
+      </SheetTrigger>
+      <SheetContent 
+        side="right"
+        className="p-0 w-[481px] max-w-none"
       >
-        <div style={{ width: '481px', height: '1024px', background: '#F8FAFC', boxShadow: '4px 20px 50px -12px rgba(13, 13, 18, 0.12)', overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'inline-flex' }}>
+        <div style={{ width: '481px', height: '100vh', background: '#F8FAFC', boxShadow: '4px 20px 50px -12px rgba(13, 13, 18, 0.12)', overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'inline-flex' }}>
           {/* Header */}
           <div style={{ alignSelf: 'stretch', paddingTop: '16px', paddingBottom: '16px', background: 'white', borderBottom: '1px #DFE7EF solid', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '8px', display: 'flex' }}>
             <div style={{ alignSelf: 'stretch', paddingLeft: '24px', paddingRight: '24px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
               <div style={{ flex: '1 1 0', alignSelf: 'stretch', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'flex' }}>
                 <div style={{ color: '#0F172A', fontSize: '20px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '25px', wordWrap: 'break-word' }}>Add Task</div>
-              </div>
-              <div style={{ width: '32px', height: '32px', paddingTop: '8px', paddingBottom: '8px', borderRadius: '6px', outline: '1px #E2E8F0 solid', outlineOffset: '-1px', justifyContent: 'center', alignItems: 'center', display: 'flex', cursor: 'pointer' }}>
-                <X size={16} style={{ color: '#64748B' }} />
               </div>
             </div>
           </div>
@@ -180,8 +177,8 @@ const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
             </div>
           </div>
         </div>
-      </DrawerContent>
-    </Drawer>
+      </SheetContent>
+    </Sheet>
   );
 };
 

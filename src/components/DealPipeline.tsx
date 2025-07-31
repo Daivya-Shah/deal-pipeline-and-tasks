@@ -1,6 +1,12 @@
-import { MoreHorizontal, Clock, X, User, Calendar } from "lucide-react";
+import { MoreHorizontal, Clock, X, User, Calendar, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   DndContext,
   DragEndEvent,
@@ -64,7 +70,7 @@ const Badge = ({ variant, children }: { variant: 'success' | 'info' | 'default',
 };
 
 const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
-  return (
+    return (
     <Drawer>
       <DrawerTrigger asChild>
         {children}
@@ -164,7 +170,13 @@ const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, onCardClick?: (id: string) => void, showIcons?: boolean }) => {
+const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteCard }: { 
+  deal: DealCard, 
+  onCardClick?: (id: string) => void, 
+  showIcons?: boolean,
+  onEditCard: (cardId: string) => void,
+  onDeleteCard: (cardId: string) => void
+}) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const {
     attributes,
@@ -194,12 +206,13 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
   // Render shadow placeholder when card is angled
   if (deal.isAngled) {
     const fixedPos = getFixedPosition();
+    const cardHeight = cardRef.current ? cardRef.current.offsetHeight : 'auto';
+    
     return (
       <div 
         ref={cardRef}
         style={{
           width: '270px',
-          height: showIcons ? '226px' : '160px',
           position: 'relative',
         }}
       >
@@ -207,19 +220,17 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
         <div 
           style={{
             width: '270px',
-            height: showIcons ? '226px' : '160px',
+            height: cardHeight,
             borderRadius: '8px',
           }}
           className="bg-surface-200"
-        >
-        </div>
+        ></div>
         
         {/* Actual tilted card - fixed positioned to appear above everything */}
         <div 
           ref={setNodeRef}
           style={{
             width: '270px',
-            height: showIcons ? '226px' : '160px',
             boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
             outline: '1px #DFE7EF solid',
             outlineOffset: '-1px',
@@ -240,27 +251,42 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
         >
         <div className="flex items-center gap-2">
             <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
-            <TaskDrawer>
-              <button className="cursor-pointer">
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g clipPath="url(#clip0_13948_4497)">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_13948_4497">
-                      <rect width="12" height="12" fill="white"/>
-                    </clipPath>
-                  </defs>
-                </svg>
-              </button>
-            </TaskDrawer>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1">
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <g clipPath="url(#clip0_13948_4497_card1)">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
+                    </g>
+                    <defs>
+                      <clipPath id="clip0_13948_4497_card1">
+                        <rect width="12" height="12" fill="white"/>
+                      </clipPath>
+                    </defs>
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-auto min-w-0 py-1">
+                <DropdownMenuItem onClick={() => onEditCard(deal.id)} className="px-2 py-1 text-xs">
+                  <Edit className="mr-2 h-3 w-3" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => onDeleteCard(deal.id)}
+                  className="text-red-600 px-2 py-1 text-xs"
+                >
+                  <Trash2 className="mr-2 h-3 w-3" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
         </div>
         
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
             {deal.value && <Badge variant="success">{deal.value}</Badge>}
             {deal.squareFootage && <Badge variant="info">{deal.squareFootage}</Badge>}
-            <Badge variant="default">{deal.category}</Badge>
-          </div>
+          <Badge variant="default">{deal.category}</Badge>
+        </div>
         
         <div className="flex flex-col">
             <div 
@@ -338,8 +364,6 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
       }}
       style={{
         width: '270px',
-        height: showIcons ? '226px' : '160px',
-        minHeight: showIcons ? '226px' : '160px',
         boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
         outline: '1px #DFE7EF solid',
         outlineOffset: '-1px',
@@ -356,20 +380,35 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
     >
       <div className="flex items-center gap-2">
         <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
-        <TaskDrawer>
-          <button className="cursor-pointer">
-                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <g clipPath="url(#clip0_13948_4497_card)">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
-                  </g>
-                  <defs>
-                    <clipPath id="clip0_13948_4497_card">
-                      <rect width="12" height="12" fill="white"/>
-                    </clipPath>
-                  </defs>
-                </svg>
-          </button>
-        </TaskDrawer>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_13948_4497_card2)">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_13948_4497_card2">
+                    <rect width="12" height="12" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-auto min-w-0 py-1">
+            <DropdownMenuItem onClick={() => onEditCard(deal.id)} className="px-2 py-1 text-xs">
+              <Edit className="mr-2 h-3 w-3" />
+              Edit
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              onClick={() => onDeleteCard(deal.id)}
+              className="text-red-600 px-2 py-1 text-xs"
+            >
+              <Trash2 className="mr-2 h-3 w-3" />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       
       <div className="flex items-center gap-2">
@@ -377,8 +416,8 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
         {deal.squareFootage && <Badge variant="info">{deal.squareFootage}</Badge>}
         <Badge variant="default">{deal.category}</Badge>
       </div>
-      
-      <div className="flex flex-col">
+        
+        <div className="flex flex-col">
         <div 
           className="p-2 bg-white rounded-[6px] flex items-center justify-between"
           style={{
@@ -386,23 +425,23 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
             outlineOffset: '-1px'
           }}
         >
-          <div className="flex items-center gap-2">
-            <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
-            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.contact.name}</div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
+              <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.contact.name}</div>
+            </div>
+            <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
           </div>
-          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
-        </div>
         <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-[6px] flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Clock size={12} className="text-[#9CA3AF]" />
-            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>
+            <div className="flex items-center gap-2">
+              <Clock size={12} className="text-[#9CA3AF]" />
+              <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>
+            </div>
+            <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
           </div>
-          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
         </div>
-      </div>
-      
+        
       {showIcons && (
-        <div className="pt-2 px-6 relative flex items-center justify-between">
+          <div className="pt-2 px-6 relative flex items-center justify-between">
           {/* Phone Icon */}
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g clipPath="url(#clip0_13917_2673)">
@@ -433,21 +472,19 @@ const DealCardComponent = ({ deal, onCardClick, showIcons }: { deal: DealCard, o
             <path d="M5.14282 9.14258H10.8571" stroke="black" strokeLinecap="round"/>
             <path d="M5.14282 11.4287H10.8571" stroke="black" strokeLinecap="round"/>
           </svg>
-          <div className="absolute right-0 top-1.5 w-1 h-1 bg-[#026BB6] rounded-full"></div>
-        </div>
-      )}
-    </div>
-  );
+            <div className="absolute right-0 top-1.5 w-1 h-1 bg-[#026BB6] rounded-full"></div>
+          </div>
+        )}
+      </div>
+    );
 };
-
+  
 // Clean card component for drag overlay (no shadow placeholder)
 const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: boolean }) => {
   return (
     <div 
       style={{
         width: '270px',
-        height: showIcons ? '226px' : '160px',
-        minHeight: showIcons ? '226px' : '160px',
         boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
         outline: '1px #DFE7EF solid',
         outlineOffset: '-1px',
@@ -460,20 +497,18 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
     >
       <div className="flex items-center gap-2">
         <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
-        <TaskDrawer>
-          <button className="cursor-pointer">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_13948_4497_drag)">
-                <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
-              </g>
-              <defs>
-                <clipPath id="clip0_13948_4497_drag">
-                  <rect width="12" height="12" fill="white"/>
-                </clipPath>
-              </defs>
-            </svg>
-          </button>
-        </TaskDrawer>
+        <div>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g clipPath="url(#clip0_13948_4497_drag)">
+              <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
+            </g>
+            <defs>
+              <clipPath id="clip0_13948_4497_drag">
+                <rect width="12" height="12" fill="white"/>
+              </clipPath>
+            </defs>
+          </svg>
+        </div>
       </div>
       
       <div className="flex items-center gap-2">
@@ -544,7 +579,16 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
   );
 };
 
-const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard }: { column: PipelineColumn, onCardClick?: (id: string) => void, showIcons?: boolean, onAddCard: (columnTitle: string) => void }) => {
+const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, onEditColumn, onDeleteColumn, onEditCard, onDeleteCard }: { 
+  column: PipelineColumn, 
+  onCardClick?: (id: string) => void, 
+  showIcons?: boolean, 
+  onAddCard: (columnTitle: string) => void,
+  onEditColumn: (columnTitle: string) => void,
+  onDeleteColumn: (columnTitle: string) => void,
+  onEditCard: (cardId: string) => void,
+  onDeleteCard: (cardId: string) => void
+}) => {
   const { setNodeRef, isOver } = useDroppable({
     id: column.title,
   });
@@ -624,7 +668,7 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard }: 
           <Badge variant="default">{column.count}</Badge>
         </div>
         <div className="flex items-center gap-4">
-          <button className="cursor-pointer" onClick={() => onAddCard(column.title)}>
+          <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1" onClick={() => onAddCard(column.title)}>
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
               <g clipPath="url(#clip0_13948_4495)">
                 <path d="M6.58065 5.41935V0.580645C6.58065 0.426648 6.51947 0.278959 6.41058 0.170067C6.30169 0.0611749 6.154 0 6 0C5.846 0 5.69831 0.0611749 5.58942 0.170067C5.48053 0.278959 5.41935 0.426648 5.41935 0.580645V5.41935H0.580645C0.426648 5.41935 0.278959 5.48053 0.170067 5.58942C0.0611749 5.69831 0 5.846 0 6C0 6.154 0.0611749 6.30169 0.170067 6.41058C0.278959 6.51947 0.426648 6.58065 0.580645 6.58065H5.41935V11.4194C5.42136 11.5727 5.48318 11.7193 5.59164 11.8277C5.7001 11.9362 5.84663 11.998 6 12C6.154 12 6.30169 11.9388 6.41058 11.8299C6.51947 11.721 6.58065 11.5734 6.58065 11.4194V6.58065H11.4194C11.5734 6.58065 11.721 6.51947 11.8299 6.41058C11.9388 6.30169 12 6.154 12 6C11.998 5.84663 11.9362 5.7001 11.8277 5.59164C11.7193 5.48318 11.5727 5.42136 11.4194 5.41935H6.58065Z" fill="#111827"/>
@@ -636,18 +680,35 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard }: 
               </defs>
             </svg>
           </button>
-          <button className="cursor-pointer">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_13948_4497)">
-                <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
-              </g>
-              <defs>
-                <clipPath id="clip0_13948_4497">
-                  <rect width="12" height="12" fill="white"/>
-                </clipPath>
-              </defs>
-            </svg>
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <g clipPath="url(#clip0_13948_4497)">
+                    <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_13948_4497">
+                      <rect width="12" height="12" fill="white"/>
+                    </clipPath>
+                  </defs>
+                </svg>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-auto min-w-0 py-1">
+              <DropdownMenuItem onClick={() => onEditColumn(column.title)} className="px-2 py-1 text-xs">
+                <Edit className="mr-2 h-3 w-3" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={() => onDeleteColumn(column.title)}
+                className="text-red-600 px-2 py-1 text-xs"
+              >
+                <Trash2 className="mr-2 h-3 w-3" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
@@ -663,144 +724,14 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard }: 
             deal={deal} 
             onCardClick={onCardClick}
             showIcons={showIcons}
+            onEditCard={onEditCard}
+            onDeleteCard={onDeleteCard}
           />
         ))}
 
 
       </div>
     </div>
-  );
-};
-
-const CreateCardForm = ({ onSubmit, onCancel }: { 
-  onSubmit: (data: Partial<DealCard>) => void;
-  onCancel: () => void;
-}) => {
-  const [formData, setFormData] = useState({
-    title: "",
-    value: "",
-    squareFootage: "",
-    category: "",
-    contactName: "",
-    task: ""
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({
-      title: formData.title || "New Deal",
-      value: formData.value || "$0",
-      squareFootage: formData.squareFootage || "0 SF",
-      category: formData.category || "New",
-      contact: {
-        name: formData.contactName || "New Contact",
-        timestamp: "just now"
-      },
-      activity: {
-        task: formData.task || "Initial contact",
-        dueDate: "today"
-      }
-    });
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Deal Title *
-        </label>
-        <input
-          type="text"
-          value={formData.title}
-          onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter deal title"
-          required
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Value
-        </label>
-        <input
-          type="text"
-          value={formData.value}
-          onChange={(e) => setFormData(prev => ({ ...prev, value: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="e.g., $1.2M"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Square Footage
-        </label>
-        <input
-          type="text"
-          value={formData.squareFootage}
-          onChange={(e) => setFormData(prev => ({ ...prev, squareFootage: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="e.g., 15K SF"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Category
-        </label>
-        <input
-          type="text"
-          value={formData.category}
-          onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="e.g., Tech, Legal, Finance"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Contact Name
-        </label>
-        <input
-          type="text"
-          value={formData.contactName}
-          onChange={(e) => setFormData(prev => ({ ...prev, contactName: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Enter contact name"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Task
-        </label>
-        <input
-          type="text"
-          value={formData.task}
-          onChange={(e) => setFormData(prev => ({ ...prev, task: e.target.value }))}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="e.g., Schedule meeting, Send proposal"
-        />
-      </div>
-
-      <div className="flex gap-3 pt-6">
-        <Button 
-          type="submit"
-          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-        >
-          Create Card
-        </Button>
-        <Button 
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          className="flex-1"
-        >
-          Cancel
-        </Button>
-      </div>
-    </form>
   );
 };
 
@@ -986,8 +917,6 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [columnIdCounter, setColumnIdCounter] = useState(5); // Start from 5 since we have 4 initial columns
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedColumn, setSelectedColumn] = useState<string>("");
   const pipelineRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -1172,32 +1101,74 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     }, 50);
   };
 
-  const handleAddCard = (columnTitle: string) => {
-    setSelectedColumn(columnTitle);
-    setSidebarOpen(true);
+  const handleEditColumn = (columnTitle: string) => {
+    const newTitle = prompt("Enter new column name:", columnTitle);
+    if (newTitle && newTitle.trim() && newTitle !== columnTitle) {
+      setPipelineData(prev => prev.map(column => 
+        column.title === columnTitle 
+          ? { ...column, title: newTitle.trim() }
+          : column
+      ));
+    }
   };
 
-  const handleCreateCard = (cardData: Partial<DealCard>) => {
+  const handleDeleteColumn = (columnTitle: string) => {
+    if (window.confirm(`Are you sure you want to delete the "${columnTitle}" column and all its cards?`)) {
+      setPipelineData(prev => prev.filter(column => column.title !== columnTitle));
+    }
+  };
+
+  const handleEditCard = (cardId: string) => {
+    const card = pipelineData
+      .flatMap(column => column.deals)
+      .find(deal => deal.id === cardId);
+    
+    if (card) {
+      const newTitle = prompt("Enter new card title:", card.title);
+      if (newTitle && newTitle.trim() && newTitle !== card.title) {
+        setPipelineData(prev => prev.map(column => ({
+          ...column,
+          deals: column.deals.map(deal => 
+            deal.id === cardId 
+              ? { ...deal, title: newTitle.trim() }
+              : deal
+          )
+        })));
+      }
+    }
+  };
+
+  const handleDeleteCard = (cardId: string) => {
+    if (window.confirm("Are you sure you want to delete this card?")) {
+      setPipelineData(prev => prev.map(column => ({
+        ...column,
+        deals: column.deals.filter(deal => deal.id !== cardId),
+        count: column.deals.filter(deal => deal.id !== cardId).length
+      })));
+    }
+  };
+
+  const handleAddCard = (columnTitle: string) => {
     const cardId = `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
     const newCard: DealCard = {
       id: cardId,
-      title: cardData.title || "New Deal",
-      value: cardData.value || "$0",
-      squareFootage: cardData.squareFootage || "0 SF",
-      category: cardData.category || "New",
-      description: cardData.description || "New deal description",
+      title: "New Deal",
+      value: "$0",
+      squareFootage: "0 SF",
+      category: "New",
+      description: "New deal description",
       contact: {
-        name: cardData.contact?.name || "New Contact",
+        name: "New Contact",
         timestamp: "just now"
       },
       activity: {
-        task: cardData.activity?.task || "Initial contact",
+        task: "Initial contact",
         dueDate: "today"
       }
     };
 
     setPipelineData(prev => prev.map(column => {
-      if (column.title === selectedColumn) {
+      if (column.title === columnTitle) {
         const updatedDeals = [...column.deals, newCard];
         return {
           ...column,
@@ -1208,16 +1179,12 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       return column;
     }));
 
-    // Close sidebar
-    setSidebarOpen(false);
-    setSelectedColumn("");
-
     // Auto-scroll column to bottom to show new card
     setTimeout(() => {
       const columnElements = document.querySelectorAll('[data-column-title]');
       columnElements.forEach(columnElement => {
         const titleElement = columnElement.querySelector('[data-column-name]');
-        if (titleElement && titleElement.textContent === selectedColumn) {
+        if (titleElement && titleElement.textContent === columnTitle) {
           const scrollContainer = columnElement.querySelector('.overflow-y-auto');
           if (scrollContainer) {
             scrollContainer.scrollTo({
@@ -1242,7 +1209,6 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   }));
 
   return (
-    <>
     <div ref={pipelineRef} className="flex flex-col gap-6" style={{ width: `${4 * 306 + 3 * 24}px` }}>
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -1258,7 +1224,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
                 placeholder="Search board"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 border-0 p-0 text-sm bg-transparent placeholder:text-inputtext-placeholder focus:outline-none"
+                className="flex-1 border-0 p-0 text-xs bg-transparent placeholder:text-inputtext-placeholder focus:outline-none"
               />
             </div>
           </div>
@@ -1293,9 +1259,19 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       <div ref={scrollContainerRef} className="w-full overflow-x-auto overflow-y-visible no-scrollbar">
         <div className="flex items-start gap-6" style={{ width: `${filteredPipelineData.length * 306 + (filteredPipelineData.length - 1) * 24}px`, minWidth: `${4 * 306 + 3 * 24}px` }}>
           {filteredPipelineData.map((column, index) => (
-              <PipelineColumnComponent key={`${column.title}-${index}`} column={column} onCardClick={handleCardClick} showIcons={showIcons} onAddCard={handleAddCard} />
-          ))}
-        </div>
+              <PipelineColumnComponent 
+                key={`${column.title}-${index}`} 
+                column={column} 
+                onCardClick={handleCardClick} 
+                showIcons={showIcons} 
+                onAddCard={handleAddCard}
+                onEditColumn={handleEditColumn}
+                onDeleteColumn={handleDeleteColumn}
+                onEditCard={handleEditCard}
+                onDeleteCard={handleDeleteCard}
+              />
+        ))}
+      </div>
       </div>
         
         <DragOverlay>
@@ -1314,43 +1290,5 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
         </DragOverlay>
       </DndContext>
     </div>
-    
-    {/* Sidebar */}
-    {sidebarOpen && (
-      <div className="fixed inset-0 z-50 flex">
-        {/* Backdrop */}
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-50" 
-          onClick={() => setSidebarOpen(false)}
-        ></div>
-        
-        {/* Sidebar */}
-        <div className="relative ml-auto w-96 h-full bg-white shadow-xl">
-          <div className="flex flex-col h-full">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Add Card to {selectedColumn}
-              </h2>
-              <button 
-                onClick={() => setSidebarOpen(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={20} />
-              </button>
-            </div>
-            
-            {/* Form */}
-            <div className="flex-1 p-6 overflow-y-auto">
-              <CreateCardForm 
-                onSubmit={handleCreateCard}
-                onCancel={() => setSidebarOpen(false)}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-    )}
-    </>
   );
 }

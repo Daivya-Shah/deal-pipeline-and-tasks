@@ -153,6 +153,21 @@ const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
                 <Calendar size={16} style={{ color: '#94A3B8' }} />
               </div>
             </div>
+
+            {/* Description */}
+            <div style={{ alignSelf: 'stretch', height: '114px', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
+              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Description</div>
+              <div style={{ alignSelf: 'stretch', flex: '1 1 0', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '8px', display: 'inline-flex' }}>
+                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'inline-flex' }}>
+                  <textarea 
+                    placeholder=" "
+                    maxLength={120}
+                    style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none', resize: 'none', width: '100%', minHeight: '60px' }}
+                  />
+                </div>
+              </div>
+              <div style={{ alignSelf: 'stretch', textAlign: 'right', color: '#334155', fontSize: '12px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '18px', wordWrap: 'break-word' }}>0/120</div>
+            </div>
           </div>
 
           {/* Footer */}
@@ -668,18 +683,20 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
           <Badge variant="default">{column.count}</Badge>
         </div>
         <div className="flex items-center gap-4">
-          <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1" onClick={() => onAddCard(column.title)}>
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_13948_4495)">
-                <path d="M6.58065 5.41935V0.580645C6.58065 0.426648 6.51947 0.278959 6.41058 0.170067C6.30169 0.0611749 6.154 0 6 0C5.846 0 5.69831 0.0611749 5.58942 0.170067C5.48053 0.278959 5.41935 0.426648 5.41935 0.580645V5.41935H0.580645C0.426648 5.41935 0.278959 5.48053 0.170067 5.58942C0.0611749 5.69831 0 5.846 0 6C0 6.154 0.0611749 6.30169 0.170067 6.41058C0.278959 6.51947 0.426648 6.58065 0.580645 6.58065H5.41935V11.4194C5.42136 11.5727 5.48318 11.7193 5.59164 11.8277C5.7001 11.9362 5.84663 11.998 6 12C6.154 12 6.30169 11.9388 6.41058 11.8299C6.51947 11.721 6.58065 11.5734 6.58065 11.4194V6.58065H11.4194C11.5734 6.58065 11.721 6.51947 11.8299 6.41058C11.9388 6.30169 12 6.154 12 6C11.998 5.84663 11.9362 5.7001 11.8277 5.59164C11.7193 5.48318 11.5727 5.42136 11.4194 5.41935H6.58065Z" fill="#111827"/>
-              </g>
-              <defs>
-                <clipPath id="clip0_13948_4495">
-                  <rect width="12" height="12" fill="white"/>
-                </clipPath>
-              </defs>
-            </svg>
-          </button>
+          <TaskDrawer>
+            <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_13948_4495)">
+                  <path d="M6.58065 5.41935V0.580645C6.58065 0.426648 6.51947 0.278959 6.41058 0.170067C6.30169 0.0611749 6.154 0 6 0C5.846 0 5.69831 0.0611749 5.58942 0.170067C5.48053 0.278959 5.41935 0.426648 5.41935 0.580645V5.41935H0.580645C0.426648 5.41935 0.278959 5.48053 0.170067 5.58942C0.0611749 5.69831 0 5.846 0 6C0 6.154 0.0611749 6.30169 0.170067 6.41058C0.278959 6.51947 0.426648 6.58065 0.580645 6.58065H5.41935V11.4194C5.42136 11.5727 5.48318 11.7193 5.59164 11.8277C5.7001 11.9362 5.84663 11.998 6 12C6.154 12 6.30169 11.9388 6.41058 11.8299C6.51947 11.721 6.58065 11.5734 6.58065 11.4194V6.58065H11.4194C11.5734 6.58065 11.721 6.51947 11.8299 6.41058C11.9388 6.30169 12 6.154 12 6C11.998 5.84663 11.9362 5.7001 11.8277 5.59164C11.7193 5.48318 11.5727 5.42136 11.4194 5.41935H6.58065Z" fill="#111827"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_13948_4495">
+                    <rect width="12" height="12" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </button>
+          </TaskDrawer>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1">

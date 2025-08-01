@@ -660,7 +660,7 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
             <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                                  <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
+                                  <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1" onClick={(e) => e.stopPropagation()}>
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g clipPath="url(#clip0_13948_4497_card1)">
                       <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
@@ -674,12 +674,12 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-auto min-w-0 py-1">
-                <DropdownMenuItem onClick={() => onEditCard(deal.id)} className="px-2 py-1 text-xs">
+                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEditCard(deal.id); }} className="px-2 py-1 text-xs">
                   <Edit className="mr-2 h-3 w-3" />
                   Edit
                 </DropdownMenuItem>
                 <DropdownMenuItem 
-                  onClick={() => onDeleteCard(deal.id)}
+                  onClick={(e) => { e.stopPropagation(); onDeleteCard(deal.id); }}
                   className="text-red-600 px-2 py-1 text-xs"
                 >
                   <Trash2 className="mr-2 h-3 w-3" />
@@ -796,7 +796,7 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
         <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-                              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
+                              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1" onClick={(e) => e.stopPropagation()}>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_13948_4497_card2)">
                   <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
@@ -810,12 +810,12 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-auto min-w-0 py-1">
-            <DropdownMenuItem onClick={() => onEditCard(deal.id)} className="px-2 py-1 text-xs">
+            <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEditCard(deal.id); }} className="px-2 py-1 text-xs">
               <Edit className="mr-2 h-3 w-3" />
               Edit
             </DropdownMenuItem>
             <DropdownMenuItem 
-              onClick={() => onDeleteCard(deal.id)}
+              onClick={(e) => { e.stopPropagation(); onDeleteCard(deal.id); }}
               className="text-red-600 px-2 py-1 text-xs"
             >
               <Trash2 className="mr-2 h-3 w-3" />
@@ -1048,8 +1048,9 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
   const handleTitleSave = () => {
     if (editingTitle.trim() && editingTitle !== column.title) {
       onEditColumn(editingTitle.trim());
+    } else {
+      onCancelEditColumn();
     }
-    onCancelEditColumn();
   };
 
   const handleTitleCancel = () => {
@@ -1057,13 +1058,39 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
     onCancelEditColumn();
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleTitleSave();
-    } else if (e.key === 'Escape') {
-      handleTitleCancel();
+  // Handle click outside to close edit mode
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (isEditingColumn && titleInputRef.current) {
+        const target = event.target as Node;
+        // Check if click is outside the input and not on dropdown elements
+        if (!titleInputRef.current.contains(target)) {
+          // Inline the save logic to avoid dependency issues
+          if (editingTitle.trim() && editingTitle !== column.title) {
+            onEditColumn(editingTitle.trim());
+          } else {
+            onCancelEditColumn();
+          }
+        }
+      }
+    };
+
+    if (isEditingColumn) {
+      // Add a small delay to ensure dropdown is closed and focus is set
+      const timeoutId = setTimeout(() => {
+        document.addEventListener('mousedown', handleClickOutside, true);
+      }, 100);
+      
+      return () => {
+        clearTimeout(timeoutId);
+        document.removeEventListener('mousedown', handleClickOutside, true);
+      };
     }
-  };
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside, true);
+    };
+  }, [isEditingColumn, editingTitle, column.title, onEditColumn, onCancelEditColumn]);
 
   // Calculate totals from cards in this column
   const calculateTotals = () => {
@@ -1143,9 +1170,8 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
                 value={editingTitle}
                 onChange={(e) => setEditingTitle(e.target.value)}
                 onBlur={handleTitleSave}
-                onKeyDown={handleKeyPress}
-                className="text-base font-semibold text-[#111827] leading-6 bg-white border border-blue-300 rounded outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
-                style={{ fontFamily: 'inherit', padding: '1px 4px', height: '24px' }}
+                className="text-base font-semibold text-[#111827] leading-6 bg-white border border-gray-300 rounded outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                style={{ height: '24px', padding: '0 4px', margin: '0', boxSizing: 'border-box' }}
               />
             ) : (
               <div className="text-base font-semibold text-[#111827] leading-6" data-column-name>{column.title}</div>
@@ -1154,7 +1180,7 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
           <div className="flex items-center gap-2">
           <Badge variant="default">{column.count}</Badge>
             <TaskDrawer columnTitle={column.title} onAddCard={onAddCard}>
-                              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
+                              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1" onClick={(e) => e.stopPropagation()}>
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_13948_4495)">
                   <path d="M6.58065 5.41935V0.580645C6.58065 0.426648 6.51947 0.278959 6.41058 0.170067C6.30169 0.0611749 6.154 0 6 0C5.846 0 5.69831 0.0611749 5.58942 0.170067C5.48053 0.278959 5.41935 0.426648 5.41935 0.580645V5.41935H0.580645C0.426648 5.41935 0.278959 5.48053 0.170067 5.58942C0.0611749 5.69831 0 5.846 0 6C0 6.154 0.0611749 6.30169 0.170067 6.41058C0.278959 6.51947 0.426648 6.58065 0.580645 6.58065H5.41935V11.4194C5.42136 11.5727 5.48318 11.7193 5.59164 11.8277C5.7001 11.9362 5.84663 11.998 6 12C6.154 12 6.30169 11.9388 6.41058 11.8299C6.51947 11.721 6.58065 11.5734 6.58065 11.4194V6.58065H11.4194C11.5734 6.58065 11.721 6.51947 11.8299 6.41058C11.9388 6.30169 12 6.154 12 6C11.998 5.84663 11.9362 5.7001 11.8277 5.59164C11.7193 5.48318 11.5727 5.42136 11.4194 5.41935H6.58065Z" fill="#111827"/>
@@ -1169,7 +1195,7 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
           </TaskDrawer>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                                <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
+                                <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1" onClick={(e) => e.stopPropagation()}>
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g clipPath="url(#clip0_13948_4497)">
                     <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
@@ -1183,12 +1209,12 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-auto min-w-0 py-1">
-              <DropdownMenuItem onClick={handleTitleEdit} className="px-2 py-1 text-xs">
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleTitleEdit(); }} className="px-2 py-1 text-xs">
                 <Edit className="mr-2 h-3 w-3" />
                 Edit
               </DropdownMenuItem>
               <DropdownMenuItem 
-                onClick={() => onDeleteColumn(column.title)}
+                onClick={(e) => { e.stopPropagation(); onDeleteColumn(column.title); }}
                 className="text-red-600 px-2 py-1 text-xs"
               >
                 <Trash2 className="mr-2 h-3 w-3" />
@@ -1623,6 +1649,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
           : column
       ));
     }
+    setEditingColumnTitle(null); // Always exit edit mode after save attempt
   };
 
   const handleDeleteColumn = (columnTitle: string) => {

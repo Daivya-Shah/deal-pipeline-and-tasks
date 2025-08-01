@@ -25,20 +25,16 @@ export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> =
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="p-0 border-0 shadow-[4px_20px_50px_-12px_rgba(13,13,18,0.12)] max-w-[603px] w-[603px] h-[202px] bg-white rounded-[8px] overflow-hidden">
-        {/* Disable default close button */}
-        <div className="[&>button]:hidden">
+    <Dialog open={isOpen}>
+      <DialogContent className="p-0 border-0 shadow-[4px_20px_50px_-12px_rgba(13,13,18,0.12)] max-w-[603px] w-[603px] h-[202px] bg-white rounded-[8px] overflow-hidden [&>button]:hidden">
           {/* Main container matching exact structure */}
           <div className="w-[603px] h-[202px] relative bg-white flex flex-col">
             {/* Header section */}
             <div className="bg-white flex flex-col">
               <div className="flex items-center justify-between pt-6 pl-6 pr-6">
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-2">
-                    <div className="text-[#111827] text-[17.5px] font-bold font-['Inter'] leading-none">
-                      Are you sure you want to delete {itemName}?
-                    </div>
+                  <div className="text-[#111827] text-[17.5px] font-bold font-['Inter'] leading-none">
+                    Are you sure you want to delete {itemName}?
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -46,13 +42,9 @@ export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> =
                     onClick={onClose}
                     className="w-[34px] h-8 pt-[10.5px] pb-[10.5px] rounded-[6px] border border-[#64748B] flex items-center justify-center hover:bg-gray-50"
                   >
-                    <div className="w-[14px] h-[14px] relative overflow-hidden">
-                      <div className="w-[11px] h-[11px] left-[1.5px] top-[1.5px] absolute bg-[#64748B]" style={{
-                        maskImage: 'url("data:image/svg+xml,%3csvg viewBox=\'0 0 24 24\' fill=\'currentColor\' xmlns=\'http://www.w3.org/2000/svg\'%3e%3cpath d=\'M18 6L6 18M6 6l12 12\'/%3e%3c/svg%3e")',
-                        maskRepeat: 'no-repeat',
-                        maskPosition: 'center'
-                      }} />
-                    </div>
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M8.0118 7.00933L12.27 2.75116C12.341 2.68501 12.3979 2.60524 12.4374 2.51661C12.4769 2.42798 12.4981 2.3323 12.4998 2.23529C12.5015 2.13827 12.4837 2.0419 12.4474 1.95194C12.411 1.86197 12.3569 1.78024 12.2883 1.71163C12.2197 1.64302 12.138 1.58893 12.048 1.55259C11.958 1.51625 11.8617 1.4984 11.7647 1.50011C11.6676 1.50182 11.572 1.52306 11.4833 1.56255C11.3947 1.60204 11.3149 1.65898 11.2488 1.72997L6.99061 5.98814L2.73244 1.72997C2.59547 1.60234 2.41431 1.53286 2.22712 1.53616C2.03993 1.53946 1.86134 1.61529 1.72895 1.74767C1.59657 1.88006 1.52074 2.05865 1.51744 2.24584C1.51414 2.43303 1.58362 2.61419 1.71125 2.75116L5.96942 7.00933L1.71125 11.2675C1.57594 11.403 1.49994 11.5866 1.49994 11.7781C1.49994 11.9696 1.57594 12.1532 1.71125 12.2887C1.84672 12.424 2.03037 12.5 2.22184 12.5C2.41332 12.5 2.59696 12.424 2.73244 12.2887L6.99061 8.03052L11.2488 12.2887C11.3843 12.424 11.5679 12.5 11.7594 12.5C11.9509 12.5 12.1345 12.424 12.27 12.2887C12.4053 12.1532 12.4813 11.9696 12.4813 11.7781C12.4813 11.5866 12.4053 11.403 12.27 11.2675L8.0118 7.00933Z" fill="#64748B"/>
+                    </svg>
                   </button>
                 </div>
               </div>
@@ -81,7 +73,6 @@ export const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> =
               </button>
             </div>
           </div>
-        </div>
       </DialogContent>
     </Dialog>
   );

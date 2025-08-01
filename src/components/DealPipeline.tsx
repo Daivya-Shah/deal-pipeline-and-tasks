@@ -311,6 +311,271 @@ const TaskDrawer = ({ children, columnTitle, onAddCard }: {
   );
 };
 
+const EditTaskDrawer = ({ card, visible, onHide, onUpdateCard }: { 
+  card: DealCard | null,
+  visible: boolean,
+  onHide: () => void,
+  onUpdateCard: (cardId: string, cardData: Partial<DealCard>) => void 
+}) => {
+  const [formData, setFormData] = useState({
+    title: '',
+    value: '',
+    squareFootage: '',
+    category: '',
+    contactName: '',
+    activityTask: '',
+    dueDate: '',
+    description: ''
+  });
+
+  // Pre-populate form when card changes
+  useEffect(() => {
+    if (card) {
+      setFormData({
+        title: card.title || '',
+        value: card.value || '',
+        squareFootage: card.squareFootage || '',
+        category: card.category || '',
+        contactName: card.contact?.name || '',
+        activityTask: card.activity?.task || '',
+        dueDate: card.activity?.dueDate || '',
+        description: card.description || ''
+      });
+    }
+  }, [card]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Format date for display
+  const formatDateForDisplay = (dateString: string) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    };
+    
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  // Check if all required fields are filled
+  const isFormValid = formData.title && formData.category && formData.contactName && formData.activityTask && formData.dueDate;
+
+  const handleSave = () => {
+    if (!formData.title || !formData.category || !formData.contactName || !formData.activityTask || !formData.dueDate) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    if (!card) return;
+
+    const cardData = {
+      title: formData.title,
+      value: formData.value || undefined,
+      squareFootage: formData.squareFootage || undefined,
+      category: formData.category,
+      description: formData.description || undefined,
+      contact: {
+        name: formData.contactName,
+        timestamp: card.contact.timestamp // Keep original timestamp
+      },
+      activity: {
+        task: formData.activityTask,
+        dueDate: formData.dueDate
+      }
+    };
+
+    onUpdateCard(card.id, cardData);
+    onHide();
+  };
+
+  const handleCancel = () => {
+    onHide();
+    // Reset form to original card data
+    if (card) {
+      setFormData({
+        title: card.title || '',
+        value: card.value || '',
+        squareFootage: card.squareFootage || '',
+        category: card.category || '',
+        contactName: card.contact?.name || '',
+        activityTask: card.activity?.task || '',
+        dueDate: card.activity?.dueDate || '',
+        description: card.description || ''
+      });
+    }
+  };
+
+  return (
+    <Sidebar 
+      visible={visible}
+      onHide={handleCancel}
+      position="right"
+      style={{ width: '481px' }}
+      className="p-0 custom-sidebar"
+      header={
+        <div style={{ color: '#0F172A', fontSize: '20px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '25px', wordWrap: 'break-word' }}>
+          Edit Deal
+        </div>
+      }
+    >
+      <div className="h-full flex flex-col">
+        {/* Content Area */}
+        <div className="flex-1 bg-gray-50 p-6 overflow-y-auto">
+          {/* Deal Title */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Deal Title *</label>
+            <input 
+              value={formData.title}
+              onChange={(e) => handleInputChange('title', e.target.value)}
+              placeholder="Enter deal title"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+        {/* Value and Square Footage */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Value</label>
+            <input 
+              value={formData.value}
+              onChange={(e) => handleInputChange('value', e.target.value)}
+              placeholder="e.g., $500k"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Square Footage</label>
+            <input 
+              value={formData.squareFootage}
+              onChange={(e) => handleInputChange('squareFootage', e.target.value)}
+              placeholder="e.g., 2,500 sqft"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Category */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Category *</label>
+          <input 
+            value={formData.category}
+            onChange={(e) => handleInputChange('category', e.target.value)}
+            placeholder="e.g., Commercial, Residential, Industrial"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Contact Information */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Contact Name *</label>
+          <div className="relative">
+            <User size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+            <input 
+              value={formData.contactName}
+              onChange={(e) => handleInputChange('contactName', e.target.value)}
+              placeholder="Enter contact name"
+              className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
+        {/* Activity Task */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Activity Task *</label>
+          <input 
+            value={formData.activityTask}
+            onChange={(e) => handleInputChange('activityTask', e.target.value)}
+            placeholder="e.g., Follow up call, Send proposal"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          />
+        </div>
+
+        {/* Due Date */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Due Date *</label>
+          <div className="relative">
+            <input 
+              id="edit-due-date-display"
+              value={formatDateForDisplay(formData.dueDate)}
+              readOnly
+              placeholder="Select date"
+              className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+              onClick={() => {
+                const input = document.getElementById('edit-due-date-hidden') as HTMLInputElement;
+                if (input) {
+                  input.focus();
+                  input.showPicker?.();
+                }
+              }}
+            />
+            <input 
+              id="edit-due-date-hidden"
+              value={formData.dueDate}
+              onChange={(e) => handleInputChange('dueDate', e.target.value)}
+              type="date"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-0 w-4 h-4"
+              style={{ pointerEvents: 'none' }}
+            />
+            <Calendar 
+              size={16} 
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer z-10" 
+              onClick={() => {
+                const input = document.getElementById('edit-due-date-hidden') as HTMLInputElement;
+                if (input) {
+                  input.focus();
+                  input.showPicker?.();
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Description */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+          <textarea 
+            value={formData.description}
+            onChange={(e) => handleInputChange('description', e.target.value)}
+            placeholder="Enter deal description or notes..."
+            maxLength={120}
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          />
+          <div className="text-right text-xs text-gray-500 mt-1">{formData.description.length}/120</div>
+        </div>
+      </div>
+        
+      {/* Footer - Action Buttons */}
+        <div className="bg-white border-t border-gray-200 p-6 flex justify-end gap-4">
+          <button 
+            onClick={handleCancel}
+            className="px-4 py-2 border rounded-md font-semibold"
+            style={{ borderColor: '#7AC8FF', color: '#006BB6' }}
+          >
+            Cancel
+          </button>
+          <button 
+            onClick={handleSave}
+            className="px-4 py-2 rounded-md font-semibold"
+            style={{
+              backgroundColor: isFormValid ? '#006BB6' : '#F1F5F9',
+              color: isFormValid ? '#FFFFFF' : '#475569',
+              border: isFormValid ? '1px solid #006BB6' : '1px solid #F1F5F9'
+            }}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </Sidebar>
+  );
+};
+
 const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteCard }: { 
   deal: DealCard, 
   onCardClick?: (id: string) => void, 
@@ -571,8 +836,8 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
           {deal.description}
         </div>
       )}
-        
-        <div className="flex flex-col">
+      
+      <div className="flex flex-col">
         <div 
           className="p-2 bg-white rounded-[6px] flex items-center justify-between"
           style={{
@@ -580,20 +845,20 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
             outlineOffset: '-1px'
           }}
         >
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
-              <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.contact.name}</div>
-            </div>
-            <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
+            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.contact.name}</div>
           </div>
-        <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-[6px] flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Clock size={12} className="text-[#9CA3AF]" />
-              <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>
-            </div>
-            <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
-          </div>
+          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.contact.timestamp}</div>
         </div>
+        <div className="pt-3 pb-2 px-2 bg-[#F9FAFB] rounded-b-[6px] flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Clock size={12} className="text-[#9CA3AF]" />
+            <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.activity.task}</div>
+          </div>
+          <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
+        </div>
+      </div>
         
       {showIcons && (
           <div className="pt-2 px-6 relative flex items-center justify-between">
@@ -630,10 +895,10 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
             <div className="absolute right-0 top-1.5 w-1 h-1 bg-[#026BB6] rounded-full"></div>
           </div>
         )}
-      </div>
-    );
+    </div>
+  );
 };
-  
+
 // Clean card component for drag overlay (no shadow placeholder)
 const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: boolean }) => {
   return (
@@ -664,7 +929,7 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
             </defs>
           </svg>
         </div>
-      </div>
+        </div>
       
       <div className="flex items-center gap-2">
         {deal.value && <Badge variant="success">{deal.value}</Badge>}
@@ -687,7 +952,7 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
             outlineOffset: '-1px'
           }}
         >
-          <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2">
             <div className="w-3 h-3 bg-[#9CA3AF] rounded-full"></div>
             <div className="text-[10.5px] text-[#111827] leading-[15.75px]">{deal.contact.name}</div>
           </div>
@@ -962,6 +1227,8 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
 
 export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   const [editingColumnTitle, setEditingColumnTitle] = useState<string | null>(null);
+  const [editingCard, setEditingCard] = useState<DealCard | null>(null);
+  const [editDrawerVisible, setEditDrawerVisible] = useState(false);
   const [pipelineData, setPipelineData] = useState<PipelineColumn[]>([
     {
       title: "Lead",
@@ -1301,7 +1568,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
 
   const handleAddColumn = () => {
     const newColumn: PipelineColumn = {
-      title: `Column ${columnIdCounter}`,
+      title: "title",
       count: 0,
       totalValue: "$0",
       totalSquareFootage: "0 SF",
@@ -1358,18 +1625,25 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       .find(deal => deal.id === cardId);
     
     if (card) {
-      const newTitle = prompt("Enter new card title:", card.title);
-      if (newTitle && newTitle.trim() && newTitle !== card.title) {
-        setPipelineData(prev => prev.map(column => ({
-          ...column,
-          deals: column.deals.map(deal => 
-            deal.id === cardId 
-              ? { ...deal, title: newTitle.trim() }
-              : deal
-          )
-        })));
-      }
+      setEditingCard(card);
+      setEditDrawerVisible(true);
     }
+  };
+
+  const handleUpdateCard = (cardId: string, cardData: Partial<DealCard>) => {
+    setPipelineData(prev => prev.map(column => ({
+      ...column,
+      deals: column.deals.map(deal => 
+        deal.id === cardId 
+          ? { ...deal, ...cardData }
+          : deal
+      )
+    })));
+  };
+
+  const handleEditDrawerHide = () => {
+    setEditDrawerVisible(false);
+    setEditingCard(null);
   };
 
   const handleDeleteCard = (cardId: string) => {
@@ -1535,6 +1809,14 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
           ) : null}
         </DragOverlay>
       </DndContext>
+      
+      {/* Edit Card Drawer */}
+      <EditTaskDrawer
+        card={editingCard}
+        visible={editDrawerVisible}
+        onHide={handleEditDrawerHide}
+        onUpdateCard={handleUpdateCard}
+      />
     </div>
   );
 }

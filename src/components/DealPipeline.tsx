@@ -1,6 +1,7 @@
 import { MoreHorizontal, Clock, X, User, Calendar, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
+import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1410,6 +1411,17 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [columnIdCounter, setColumnIdCounter] = useState(5); // Start from 5 since we have 4 initial columns
+  const [deleteConfirmation, setDeleteConfirmation] = useState<{
+    isOpen: boolean;
+    itemName: string;
+    itemType: "task" | "column";
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    itemName: "",
+    itemType: "task",
+    onConfirm: () => {}
+  });
   const pipelineRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -1614,9 +1626,14 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   };
 
   const handleDeleteColumn = (columnTitle: string) => {
-    if (window.confirm(`Are you sure you want to delete the "${columnTitle}" column and all its cards?`)) {
-      setPipelineData(prev => prev.filter(column => column.title !== columnTitle));
-    }
+    setDeleteConfirmation({
+      isOpen: true,
+      itemName: columnTitle,
+      itemType: "column",
+      onConfirm: () => {
+        setPipelineData(prev => prev.filter(column => column.title !== columnTitle));
+      }
+    });
   };
 
   const handleEditCard = (cardId: string) => {
@@ -1647,13 +1664,25 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   };
 
   const handleDeleteCard = (cardId: string) => {
-    if (window.confirm("Are you sure you want to delete this card?")) {
-      setPipelineData(prev => prev.map(column => ({
-        ...column,
-        deals: column.deals.filter(deal => deal.id !== cardId),
-        count: column.deals.filter(deal => deal.id !== cardId).length
-      })));
-    }
+    // Find the card to get its name
+    const card = pipelineData
+      .flatMap(column => column.deals)
+      .find(deal => deal.id === cardId);
+    
+    const cardName = card?.title || "this task";
+    
+    setDeleteConfirmation({
+      isOpen: true,
+      itemName: cardName,
+      itemType: "task",
+      onConfirm: () => {
+        setPipelineData(prev => prev.map(column => ({
+          ...column,
+          deals: column.deals.filter(deal => deal.id !== cardId),
+          count: column.deals.filter(deal => deal.id !== cardId).length
+        })));
+      }
+    });
   };
 
   const handleAddCard = (columnTitle: string, cardData?: Partial<DealCard>) => {
@@ -1816,6 +1845,15 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
         visible={editDrawerVisible}
         onHide={handleEditDrawerHide}
         onUpdateCard={handleUpdateCard}
+      />
+      
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() => setDeleteConfirmation(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={deleteConfirmation.onConfirm}
+        itemName={deleteConfirmation.itemName}
+        itemType={deleteConfirmation.itemType}
       />
     </div>
   );

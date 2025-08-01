@@ -132,3 +132,39 @@ All colors MUST be HSL.
     scrollbar-width: none; /* Firefox */
   }
 }
+
+/* Custom PrimeReact Sidebar styling */
+.custom-sidebar .p-sidebar-header {
+  border: none !important;
+  padding: 16px 24px !important;
+  background: white !important;
+  border-bottom: 1px solid #DFE7EF !important;
+}
+
+.custom-sidebar .p-sidebar-content {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+.custom-sidebar .p-sidebar-footer {
+  border: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* Hide native date picker icons */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0 !important;
+  position: absolute !important;
+  width: 100% !important;
+  height: 100% !important;
+  cursor: pointer !important;
+}
+
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-outer-spin-button {
+  -webkit-appearance: none !important;
+  margin: 0 !important;
+}
+

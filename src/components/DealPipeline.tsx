@@ -23,11 +23,7 @@ import {
   useDroppable,
 } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Sidebar } from 'primereact/sidebar';
 
 interface DealCard {
   id: string;
@@ -69,116 +65,249 @@ const Badge = ({ variant, children }: { variant: 'success' | 'info' | 'default',
   );
 };
 
-const TaskDrawer = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
+const TaskDrawer = ({ children, columnTitle, onAddCard }: { 
+  children: React.ReactNode, 
+  columnTitle: string,
+  onAddCard: (columnTitle: string, cardData: Partial<DealCard>) => void 
+}) => {
+  const [visible, setVisible] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    value: '',
+    squareFootage: '',
+    category: '',
+    contactName: '',
+    activityTask: '',
+    dueDate: '',
+    description: ''
+  });
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // Format date for display
+  const formatDateForDisplay = (dateString: string) => {
+    if (!dateString) return '';
+    
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    };
+    
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  // Check if all required fields are filled
+  const isFormValid = formData.title && formData.category && formData.contactName && formData.activityTask && formData.dueDate;
+
+  const handleSave = () => {
+    if (!formData.title || !formData.category || !formData.contactName || !formData.activityTask || !formData.dueDate) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    const cardData = {
+      title: formData.title,
+      value: formData.value || undefined,
+      squareFootage: formData.squareFootage || undefined,
+      category: formData.category,
+      description: formData.description || undefined,
+      contact: {
+        name: formData.contactName,
+        timestamp: "just now"
+      },
+      activity: {
+        task: formData.activityTask,
+        dueDate: formData.dueDate
+      }
+    };
+
+    onAddCard(columnTitle, cardData);
+    setVisible(false);
+    // Reset form
+    setFormData({
+      title: '',
+      value: '',
+      squareFootage: '',
+      category: '',
+      contactName: '',
+      activityTask: '',
+      dueDate: '',
+      description: ''
+    });
+  };
+
+    return (
+    <>
+      <div onClick={() => setVisible(true)}>
         {children}
-      </SheetTrigger>
-      <SheetContent 
-        side="right"
-        className="p-0 w-[481px] max-w-none"
+      </div>
+      <Sidebar 
+        visible={visible}
+        onHide={() => setVisible(false)}
+        position="right"
+        style={{ width: '481px' }}
+        className="p-0 custom-sidebar"
+        header={
+          <div style={{ color: '#0F172A', fontSize: '20px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '25px', wordWrap: 'break-word' }}>
+            Add Deal
+          </div>
+        }
       >
-        <div style={{ width: '481px', height: '100vh', background: '#F8FAFC', boxShadow: '4px 20px 50px -12px rgba(13, 13, 18, 0.12)', overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'inline-flex' }}>
-          {/* Header */}
-          <div style={{ alignSelf: 'stretch', paddingTop: '16px', paddingBottom: '16px', background: 'white', borderBottom: '1px #DFE7EF solid', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '8px', display: 'flex' }}>
-            <div style={{ alignSelf: 'stretch', paddingLeft: '24px', paddingRight: '24px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
-              <div style={{ flex: '1 1 0', alignSelf: 'stretch', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'flex' }}>
-                <div style={{ color: '#0F172A', fontSize: '20px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '25px', wordWrap: 'break-word' }}>Add Task</div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Content */}
-          <div style={{ alignSelf: 'stretch', flex: '1 1 0', padding: '24px', overflow: 'hidden', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '24px', display: 'flex' }}>
-            {/* Task Name */}
-            <div style={{ alignSelf: 'stretch', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
-              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Task Name *</div>
-              <div style={{ alignSelf: 'stretch', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
-                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', display: 'inline-flex' }}>
-                  <div style={{ alignSelf: 'stretch', overflow: 'hidden', justifyContent: 'flex-start', alignItems: 'center', display: 'inline-flex' }}>
-                    <input 
-                      placeholder="Enter a unique name"
-                      style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-              </div>
+        <div className="h-full flex flex-col">
+          {/* Content Area */}
+          <div className="flex-1 bg-gray-50 p-6 overflow-y-auto">
+            {/* Deal Title */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Deal Title *</label>
+              <input 
+                value={formData.title}
+                onChange={(e) => handleInputChange('title', e.target.value)}
+                placeholder="Enter deal title"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
 
-            {/* Assignee */}
-            <div style={{ alignSelf: 'stretch', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
-              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Assignee *</div>
-              <div style={{ alignSelf: 'stretch', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
-                <User size={16} style={{ color: '#94A3B8' }} />
-                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', display: 'inline-flex' }}>
-                  <div style={{ alignSelf: 'stretch', overflow: 'hidden', justifyContent: 'flex-start', alignItems: 'center', display: 'inline-flex' }}>
-                    <input 
-                      placeholder="Who is getting this done?"
-                      style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-              </div>
+          {/* Value and Square Footage */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Value</label>
+              <input 
+                value={formData.value}
+                onChange={(e) => handleInputChange('value', e.target.value)}
+                placeholder="e.g., $500k"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-
-            {/* Company */}
-            <div style={{ alignSelf: 'stretch', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
-              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Company</div>
-              <div style={{ alignSelf: 'stretch', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
-                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', display: 'inline-flex' }}>
-                  <div style={{ alignSelf: 'stretch', overflow: 'hidden', justifyContent: 'flex-start', alignItems: 'center', display: 'inline-flex' }}>
-                    <input 
-                      placeholder="Add the client or prospect this task relates to"
-                      style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none' }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Due Date */}
-            <div style={{ alignSelf: 'stretch', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
-              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Due Date *</div>
-              <div style={{ alignSelf: 'stretch', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', display: 'inline-flex' }}>
-                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-start', display: 'inline-flex' }}>
-                  <input 
-                    type="date"
-                    style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none' }}
-                  />
-                </div>
-                <Calendar size={16} style={{ color: '#94A3B8' }} />
-              </div>
-            </div>
-
-            {/* Description */}
-            <div style={{ alignSelf: 'stretch', height: '114px', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '4px', display: 'flex' }}>
-              <div style={{ alignSelf: 'stretch', color: '#334155', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Description</div>
-              <div style={{ alignSelf: 'stretch', flex: '1 1 0', paddingLeft: '12px', paddingRight: '12px', paddingTop: '8px', paddingBottom: '8px', background: 'white', boxShadow: '0px 1px 2px rgba(18, 18, 23, 0.05)', borderRadius: '6px', outline: '1px #CBD5E1 solid', outlineOffset: '-1px', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '8px', display: 'inline-flex' }}>
-                <div style={{ flex: '1 1 0', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'flex-start', display: 'inline-flex' }}>
-                  <textarea 
-                    placeholder=" "
-                    maxLength={120}
-                    style={{ flex: '1 1 0', color: '#64748B', fontSize: '14px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '22px', background: 'transparent', border: 'none', outline: 'none', resize: 'none', width: '100%', minHeight: '60px' }}
-                  />
-                </div>
-              </div>
-              <div style={{ alignSelf: 'stretch', textAlign: 'right', color: '#334155', fontSize: '12px', fontFamily: 'Inter', fontWeight: 400, lineHeight: '18px', wordWrap: 'break-word' }}>0/120</div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Square Footage</label>
+              <input 
+                value={formData.squareFootage}
+                onChange={(e) => handleInputChange('squareFootage', e.target.value)}
+                placeholder="e.g., 2,500 sqft"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
           </div>
 
-          {/* Footer */}
-          <div style={{ width: '479px', paddingLeft: '24px', paddingRight: '24px', paddingTop: '16px', paddingBottom: '16px', background: 'white', borderTop: '1px #DFE1E6 solid', justifyContent: 'flex-end', alignItems: 'center', gap: '16px', display: 'inline-flex' }}>
-            <div style={{ paddingLeft: '16px', paddingRight: '16px', paddingTop: '8px', paddingBottom: '8px', borderRadius: '6px', outline: '1px #7AC8FF solid', outlineOffset: '-1px', justifyContent: 'center', alignItems: 'center', gap: '8px', display: 'flex', cursor: 'pointer' }}>
-              <div style={{ color: '#006BB6', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Cancel</div>
+          {/* Category */}
+                      <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Category *</label>
+              <input 
+                value={formData.category}
+                onChange={(e) => handleInputChange('category', e.target.value)}
+                placeholder="e.g., Commercial, Residential, Industrial"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
-            <div style={{ paddingLeft: '16px', paddingRight: '16px', paddingTop: '8px', paddingBottom: '8px', opacity: 0.70, background: '#F1F5F9', borderRadius: '6px', outline: '1px #F1F5F9 solid', outlineOffset: '-1px', justifyContent: 'center', alignItems: 'center', gap: '8px', display: 'flex' }}>
-              <div style={{ color: '#475569', fontSize: '14px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '22px', wordWrap: 'break-word' }}>Save</div>
+
+          {/* Contact Information */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Contact Name *</label>
+            <div className="relative">
+              <User size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input 
+                value={formData.contactName}
+                onChange={(e) => handleInputChange('contactName', e.target.value)}
+                placeholder="Enter contact name"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
             </div>
+          </div>
+
+          {/* Activity Task */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Activity Task *</label>
+            <input 
+              value={formData.activityTask}
+              onChange={(e) => handleInputChange('activityTask', e.target.value)}
+              placeholder="e.g., Follow up call, Send proposal"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Due Date */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Due Date *</label>
+            <div className="relative">
+              <input 
+                id="due-date-display"
+                value={formatDateForDisplay(formData.dueDate)}
+                readOnly
+                placeholder="Select date"
+                className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                onClick={() => {
+                  const input = document.getElementById('due-date-hidden') as HTMLInputElement;
+                  if (input) {
+                    input.focus();
+                    input.showPicker?.();
+                  }
+                }}
+              />
+              <input 
+                id="due-date-hidden"
+                value={formData.dueDate}
+                onChange={(e) => handleInputChange('dueDate', e.target.value)}
+                type="date"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 opacity-0 w-4 h-4"
+                style={{ pointerEvents: 'none' }}
+              />
+              <Calendar 
+                size={16} 
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 cursor-pointer z-10" 
+                onClick={() => {
+                  const input = document.getElementById('due-date-hidden') as HTMLInputElement;
+                  if (input) {
+                    input.focus();
+                    input.showPicker?.();
+                  }
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+            <textarea 
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Enter deal description or notes..."
+              maxLength={120}
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            />
+            <div className="text-right text-xs text-gray-500 mt-1">{formData.description.length}/120</div>
           </div>
         </div>
-      </SheetContent>
-    </Sheet>
+          
+        {/* Footer - Action Buttons */}
+          <div className="bg-white border-t border-gray-200 p-6 flex justify-end gap-4">
+            <button 
+              onClick={() => setVisible(false)}
+              className="px-4 py-2 border rounded-md font-semibold"
+              style={{ borderColor: '#7AC8FF', color: '#006BB6' }}
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={handleSave}
+              className="px-4 py-2 rounded-md font-semibold"
+              style={{
+                backgroundColor: isFormValid ? '#006BB6' : '#F1F5F9',
+                color: isFormValid ? '#FFFFFF' : '#475569',
+                border: isFormValid ? '1px solid #006BB6' : '1px solid #F1F5F9'
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </Sidebar>
+    </>
   );
 };
 
@@ -265,7 +394,7 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
             <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1">
+                                  <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g clipPath="url(#clip0_13948_4497_card1)">
                       <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
@@ -322,6 +451,16 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
             <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
           </div>
         </div>
+        
+        {/* Description Field - only show when icons are enabled */}
+        {showIcons && deal.description && (
+          <div className="mt-3 px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+            <div className="text-xs text-gray-600 mb-1 font-medium">Description</div>
+            <div className="text-xs text-gray-800 leading-relaxed">
+            {deal.description}
+            </div>
+          </div>
+        )}
         
           {showIcons && (
           <div className="pt-2 px-6 relative flex items-center justify-between">
@@ -394,7 +533,7 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
         <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1">
+                              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_13948_4497_card2)">
                   <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
@@ -451,6 +590,16 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
             <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
           </div>
         </div>
+        
+        {/* Description Field - only show when icons are enabled */}
+        {showIcons && deal.description && (
+          <div className="mt-3 px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+            <div className="text-xs text-gray-600 mb-1 font-medium">Description</div>
+            <div className="text-xs text-gray-800 leading-relaxed">
+              {deal.description}
+            </div>
+          </div>
+        )}
         
       {showIcons && (
           <div className="pt-2 px-6 relative flex items-center justify-between">
@@ -552,6 +701,16 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
         </div>
       </div>
       
+      {/* Description Field - only show when icons are enabled */}
+      {showIcons && deal.description && (
+        <div className="mt-3 px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
+          <div className="text-xs text-gray-600 mb-1 font-medium">Description</div>
+          <div className="text-xs text-gray-800 leading-relaxed">
+            {deal.description}
+          </div>
+        </div>
+      )}
+      
       {showIcons && (
         <div className="pt-2 px-6 relative flex items-center justify-between">
           {/* Phone Icon */}
@@ -591,7 +750,7 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
   );
 };
 
-const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, onEditColumn, onDeleteColumn, onEditCard, onDeleteCard }: { 
+const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, onEditColumn, onDeleteColumn, onEditCard, onDeleteCard, isEditingColumn, onStartEditColumn, onCancelEditColumn }: { 
   column: PipelineColumn, 
   onCardClick?: (id: string) => void, 
   showIcons?: boolean, 
@@ -599,11 +758,55 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
   onEditColumn: (columnTitle: string) => void,
   onDeleteColumn: (columnTitle: string) => void,
   onEditCard: (cardId: string) => void,
-  onDeleteCard: (cardId: string) => void
+  onDeleteCard: (cardId: string) => void,
+  isEditingColumn?: boolean,
+  onStartEditColumn: (columnTitle: string) => void,
+  onCancelEditColumn: () => void
 }) => {
+  const [editingTitle, setEditingTitle] = useState(column.title);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  
   const { setNodeRef, isOver } = useDroppable({
     id: column.title,
   });
+
+  // Focus on input when editing starts
+  useEffect(() => {
+    if (isEditingColumn && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [isEditingColumn]);
+
+  // Update local editing title when column title changes
+  useEffect(() => {
+    setEditingTitle(column.title);
+  }, [column.title]);
+
+  const handleTitleEdit = () => {
+    onStartEditColumn(column.title);
+    setEditingTitle(column.title);
+  };
+
+  const handleTitleSave = () => {
+    if (editingTitle.trim() && editingTitle !== column.title) {
+      onEditColumn(editingTitle.trim());
+    }
+    onCancelEditColumn();
+  };
+
+  const handleTitleCancel = () => {
+    setEditingTitle(column.title);
+    onCancelEditColumn();
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleTitleSave();
+    } else if (e.key === 'Escape') {
+      handleTitleCancel();
+    }
+  };
 
   // Calculate totals from cards in this column
   const calculateTotals = () => {
@@ -655,7 +858,8 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
 
     return {
       totalValue: formatValue(totalValue),
-      totalSquareFootage: formatSquareFootage(totalSquareFootage)
+      totalSquareFootage: formatSquareFootage(totalSquareFootage),
+      hasAnyTotals: totalValue > 0 || totalSquareFootage > 0
     };
   };
 
@@ -674,14 +878,26 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
         backgroundColor: isOver ? '#f0f9ff' : undefined,
       }}
     >
-      <div className="flex items-center justify-between">
-        <div className="flex-1 flex items-center gap-2">
-          <div className="text-base font-semibold text-[#111827] leading-6" data-column-name>{column.title}</div>
-          <Badge variant="default">{column.count}</Badge>
-        </div>
-        <div className="flex items-center gap-4">
-          <TaskDrawer>
-            <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1">
+              <div className="flex items-center justify-between">
+          <div className="flex-1 mr-2">
+            {isEditingColumn ? (
+              <input
+                ref={titleInputRef}
+                value={editingTitle}
+                onChange={(e) => setEditingTitle(e.target.value)}
+                onBlur={handleTitleSave}
+                onKeyDown={handleKeyPress}
+                className="text-base font-semibold text-[#111827] leading-6 bg-white border border-blue-300 rounded outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-full"
+                style={{ fontFamily: 'inherit', padding: '1px 4px', height: '24px' }}
+              />
+            ) : (
+              <div className="text-base font-semibold text-[#111827] leading-6" data-column-name>{column.title}</div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="default">{column.count}</Badge>
+            <TaskDrawer columnTitle={column.title} onAddCard={onAddCard}>
+                              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_13948_4495)">
                   <path d="M6.58065 5.41935V0.580645C6.58065 0.426648 6.51947 0.278959 6.41058 0.170067C6.30169 0.0611749 6.154 0 6 0C5.846 0 5.69831 0.0611749 5.58942 0.170067C5.48053 0.278959 5.41935 0.426648 5.41935 0.580645V5.41935H0.580645C0.426648 5.41935 0.278959 5.48053 0.170067 5.58942C0.0611749 5.69831 0 5.846 0 6C0 6.154 0.0611749 6.30169 0.170067 6.41058C0.278959 6.51947 0.426648 6.58065 0.580645 6.58065H5.41935V11.4194C5.42136 11.5727 5.48318 11.7193 5.59164 11.8277C5.7001 11.9362 5.84663 11.998 6 12C6.154 12 6.30169 11.9388 6.41058 11.8299C6.51947 11.721 6.58065 11.5734 6.58065 11.4194V6.58065H11.4194C11.5734 6.58065 11.721 6.51947 11.8299 6.41058C11.9388 6.30169 12 6.154 12 6C11.998 5.84663 11.9362 5.7001 11.8277 5.59164C11.7193 5.48318 11.5727 5.42136 11.4194 5.41935H6.58065Z" fill="#111827"/>
@@ -696,7 +912,7 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
           </TaskDrawer>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 hover:bg-gray-100 hover:scale-110 transition-all duration-200 rounded p-1">
+                                <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
                 <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <g clipPath="url(#clip0_13948_4497)">
                     <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
@@ -710,7 +926,7 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-auto min-w-0 py-1">
-              <DropdownMenuItem onClick={() => onEditColumn(column.title)} className="px-2 py-1 text-xs">
+              <DropdownMenuItem onClick={handleTitleEdit} className="px-2 py-1 text-xs">
                 <Edit className="mr-2 h-3 w-3" />
                 Edit
               </DropdownMenuItem>
@@ -726,9 +942,13 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
         </div>
       </div>
       
-      <div className="flex items-center gap-2">
-        <Badge variant="success">{totals.totalValue}</Badge>
-        <Badge variant="info">{totals.totalSquareFootage}</Badge>
+      <div className="flex items-center gap-2" style={{ minHeight: '32px' }}>
+        {totals.hasAnyTotals && (
+          <>
+            {totals.totalValue !== "$0" && <Badge variant="success">{totals.totalValue}</Badge>}
+            {totals.totalSquareFootage !== "0 SF" && <Badge variant="info">{totals.totalSquareFootage}</Badge>}
+          </>
+        )}
       </div>
       
       <div className="flex flex-col items-center gap-4 overflow-y-auto no-scrollbar" style={{ width: '100%', maxWidth: '100%' }}>
@@ -750,6 +970,7 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
 };
 
 export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
+  const [editingColumnTitle, setEditingColumnTitle] = useState<string | null>(null);
   const [pipelineData, setPipelineData] = useState<PipelineColumn[]>([
     {
       title: "Lead",
@@ -1115,11 +1336,19 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     }, 50);
   };
 
-  const handleEditColumn = (columnTitle: string) => {
-    const newTitle = prompt("Enter new column name:", columnTitle);
-    if (newTitle && newTitle.trim() && newTitle !== columnTitle) {
+  const handleStartEditColumn = (columnTitle: string) => {
+    setEditingColumnTitle(columnTitle);
+  };
+
+  const handleCancelEditColumn = () => {
+    setEditingColumnTitle(null);
+  };
+
+  const handleEditColumn = (newTitle: string) => {
+    const currentTitle = editingColumnTitle;
+    if (currentTitle && newTitle.trim() && newTitle !== currentTitle) {
       setPipelineData(prev => prev.map(column => 
-        column.title === columnTitle 
+        column.title === currentTitle 
           ? { ...column, title: newTitle.trim() }
           : column
       ));
@@ -1162,9 +1391,18 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     }
   };
 
-  const handleAddCard = (columnTitle: string) => {
+  const handleAddCard = (columnTitle: string, cardData?: Partial<DealCard>) => {
     const cardId = `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-    const newCard: DealCard = {
+    const newCard: DealCard = cardData ? {
+      id: cardId,
+      title: cardData.title!,
+      value: cardData.value,
+      squareFootage: cardData.squareFootage,
+      category: cardData.category!,
+      description: cardData.description,
+      contact: cardData.contact!,
+      activity: cardData.activity!
+    } : {
       id: cardId,
       title: "New Deal",
       value: "$0",
@@ -1283,6 +1521,9 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
                 onDeleteColumn={handleDeleteColumn}
                 onEditCard={handleEditCard}
                 onDeleteCard={handleDeleteCard}
+                isEditingColumn={editingColumnTitle === column.title}
+                onStartEditColumn={handleStartEditColumn}
+                onCancelEditColumn={handleCancelEditColumn}
               />
         ))}
       </div>

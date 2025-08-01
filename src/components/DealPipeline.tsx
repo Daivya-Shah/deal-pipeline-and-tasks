@@ -429,6 +429,13 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
           <Badge variant="default">{deal.category}</Badge>
         </div>
         
+        {/* Description Field - only show when icons are enabled */}
+        {showIcons && deal.description && (
+          <div className="text-xs text-gray-800 leading-relaxed">
+            {deal.description}
+          </div>
+        )}
+        
         <div className="flex flex-col">
             <div 
               className="p-2 bg-white rounded-[6px] flex items-center justify-between"
@@ -451,16 +458,6 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
             <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
           </div>
         </div>
-        
-        {/* Description Field - only show when icons are enabled */}
-        {showIcons && deal.description && (
-          <div className="mt-3 px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
-            <div className="text-xs text-gray-600 mb-1 font-medium">Description</div>
-            <div className="text-xs text-gray-800 leading-relaxed">
-            {deal.description}
-            </div>
-          </div>
-        )}
         
           {showIcons && (
           <div className="pt-2 px-6 relative flex items-center justify-between">
@@ -567,6 +564,13 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
         {deal.squareFootage && <Badge variant="info">{deal.squareFootage}</Badge>}
         <Badge variant="default">{deal.category}</Badge>
       </div>
+      
+      {/* Description Field - only show when icons are enabled */}
+      {showIcons && deal.description && (
+        <div className="text-xs text-gray-800 leading-relaxed">
+          {deal.description}
+        </div>
+      )}
         
         <div className="flex flex-col">
         <div 
@@ -590,16 +594,6 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
             <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
           </div>
         </div>
-        
-        {/* Description Field - only show when icons are enabled */}
-        {showIcons && deal.description && (
-          <div className="mt-3 px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
-            <div className="text-xs text-gray-600 mb-1 font-medium">Description</div>
-            <div className="text-xs text-gray-800 leading-relaxed">
-              {deal.description}
-            </div>
-          </div>
-        )}
         
       {showIcons && (
           <div className="pt-2 px-6 relative flex items-center justify-between">
@@ -678,6 +672,13 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
         <Badge variant="default">{deal.category}</Badge>
       </div>
       
+      {/* Description Field - only show when icons are enabled */}
+      {showIcons && deal.description && (
+        <div className="text-xs text-gray-800 leading-relaxed">
+          {deal.description}
+        </div>
+      )}
+      
       <div className="flex flex-col">
         <div 
           className="p-2 bg-white rounded-[6px] flex items-center justify-between"
@@ -700,16 +701,6 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
           <div className="text-[10.5px] text-[#6B7280] leading-[15.75px]">{deal.activity.dueDate}</div>
         </div>
       </div>
-      
-      {/* Description Field - only show when icons are enabled */}
-      {showIcons && deal.description && (
-        <div className="mt-3 px-3 py-2 bg-gray-50 rounded-md border border-gray-200">
-          <div className="text-xs text-gray-600 mb-1 font-medium">Description</div>
-          <div className="text-xs text-gray-800 leading-relaxed">
-            {deal.description}
-          </div>
-        </div>
-      )}
       
       {showIcons && (
         <div className="pt-2 px-6 relative flex items-center justify-between">
@@ -878,7 +869,7 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
         backgroundColor: isOver ? '#f0f9ff' : undefined,
       }}
     >
-              <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between">
           <div className="flex-1 mr-2">
             {isEditingColumn ? (
               <input
@@ -895,7 +886,7 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="default">{column.count}</Badge>
+          <Badge variant="default">{column.count}</Badge>
             <TaskDrawer columnTitle={column.title} onAddCard={onAddCard}>
                               <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">

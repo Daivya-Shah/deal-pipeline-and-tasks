@@ -1781,12 +1781,16 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     ).length
   }));
 
+  // Calculate dynamic width based on number of columns
+  const dynamicWidth = filteredPipelineData.length * 306 + (Math.max(filteredPipelineData.length - 1, 0)) * 24;
+  const minWidth = 4 * 306 + 3 * 24; // Minimum width for 4 columns
+
   return (
-    <div ref={pipelineRef} className="flex flex-col gap-6" style={{ width: `${4 * 306 + 3 * 24}px` }}>
+    <div ref={pipelineRef} className="flex flex-col gap-6" style={{ width: `${Math.max(dynamicWidth, minWidth)}px` }}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="text-2xl font-semibold text-surface-900 leading-[30px]">Deal Pipeline</div>
-        <div className="w-[628px] flex items-center justify-end gap-4">
+        <div className="flex items-center justify-end gap-4" style={{ width: `${Math.max(dynamicWidth - 200, 628)}px` }}>
           <div className="flex-1 flex flex-col gap-1">
             <div className="px-2 py-1 h-9 bg-inputtext-background shadow-sm border border-inputtext-border rounded-md flex items-center gap-2">
               {/* Custom Search Icon */}
@@ -1830,7 +1834,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
         onDragEnd={handleDragEnd}
       >
       <div ref={scrollContainerRef} className="w-full overflow-x-auto overflow-y-visible no-scrollbar">
-        <div className="flex items-start gap-6" style={{ width: `${filteredPipelineData.length * 306 + (filteredPipelineData.length - 1) * 24}px`, minWidth: `${4 * 306 + 3 * 24}px` }}>
+        <div className="flex items-start gap-6" style={{ width: `${Math.max(dynamicWidth, minWidth)}px` }}>
           {filteredPipelineData.map((column, index) => (
               <PipelineColumnComponent 
                 key={`${column.title}-${index}`} 

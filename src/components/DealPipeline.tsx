@@ -1265,9 +1265,8 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
   );
 };
 
-interface TableColumn {
-  id: string;
-  name: string;
+interface TableSettingsColumn {
+  title: string;
   enabled: boolean;
   editable: boolean;
 }
@@ -1277,21 +1276,11 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   const [editingCard, setEditingCard] = useState<DealCard | null>(null);
   const [editDrawerVisible, setEditDrawerVisible] = useState(false);
   const [settingsSidebarOpen, setSettingsSidebarOpen] = useState(false);
-  const [tableColumns, setTableColumns] = useState<TableColumn[]>([
-    { id: "company", name: "Company", enabled: true, editable: false },
-    { id: "contacts", name: "Contacts", enabled: true, editable: true },
-    { id: "status", name: "Status", enabled: true, editable: true },
-    { id: "lastActivity", name: "Last Activity", enabled: true, editable: true },
-    { id: "signals", name: "Signals", enabled: true, editable: true },
-    { id: "tags", name: "Tags", enabled: true, editable: true },
-    { id: "industry", name: "Industry", enabled: false, editable: true },
-    { id: "leaseExpiration", name: "Lease Expiration", enabled: false, editable: true },
-    { id: "address", name: "Address", enabled: false, editable: true },
-    { id: "description", name: "Description", enabled: false, editable: true },
-    { id: "employees", name: "# of Employees", enabled: false, editable: true },
-    { id: "revenue", name: "Revenue", enabled: false, editable: true },
-    { id: "website", name: "Website", enabled: false, editable: true },
-    { id: "companyType", name: "Company Type", enabled: false, editable: true },
+  const [tableSettingsColumns, setTableSettingsColumns] = useState<TableSettingsColumn[]>([
+    { title: "Lead", enabled: true, editable: false },
+    { title: "Pitching", enabled: true, editable: true },
+    { title: "Touring", enabled: true, editable: true },
+    { title: "Closed", enabled: true, editable: true },
   ]);
   const [pipelineData, setPipelineData] = useState<PipelineColumn[]>([
     {
@@ -1692,6 +1681,38 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     setSettingsSidebarOpen(true);
   };
 
+  const handleEditColumnFromSettings = (oldTitle: string, newTitle: string) => {
+    // Update the actual pipeline data
+    setPipelineData(prev => prev.map(column => 
+      column.title === oldTitle 
+        ? { ...column, title: newTitle }
+        : column
+    ));
+    
+    // Update the table settings columns
+    setTableSettingsColumns(prev => prev.map(col => 
+      col.title === oldTitle 
+        ? { ...col, title: newTitle }
+        : col
+    ));
+  };
+
+  const handleDeleteColumnFromSettings = (title: string) => {
+    // Show confirmation dialog
+    setDeleteConfirmation({
+      isOpen: true,
+      itemName: title,
+      itemType: "column",
+      onConfirm: () => {
+        // Remove from pipeline data
+        setPipelineData(prev => prev.filter(column => column.title !== title));
+        
+        // Remove from table settings columns
+        setTableSettingsColumns(prev => prev.filter(col => col.title !== title));
+      }
+    });
+  };
+
   const handleStartEditColumn = (columnTitle: string) => {
     setEditingColumnTitle(columnTitle);
   };
@@ -1958,8 +1979,10 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       <TableSettingsSidebar
         open={settingsSidebarOpen}
         onOpenChange={setSettingsSidebarOpen}
-        columns={tableColumns}
-        onColumnsChange={setTableColumns}
+        columns={tableSettingsColumns}
+        onColumnsChange={setTableSettingsColumns}
+        onEditColumn={handleEditColumnFromSettings}
+        onDeleteColumn={handleDeleteColumnFromSettings}
       />
     </div>
   );

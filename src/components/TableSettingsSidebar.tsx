@@ -1,14 +1,8 @@
 import { useState, useEffect } from "react";
-import { X, GripVertical } from "lucide-react";
+import { X, GripVertical, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetFooter,
-} from "@/components/ui/sheet";
+import { Sidebar } from 'primereact/sidebar';
 import {
   DndContext,
   DragEndEvent,
@@ -26,27 +20,32 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-interface TableColumn {
-  id: string;
-  name: string;
+interface PipelineColumn {
+  title: string;
   enabled: boolean;
-  editable: boolean; // Company column is not editable/deletable
+  editable: boolean; // Lead column might not be editable
 }
 
 interface TableSettingsSidebarProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  columns: TableColumn[];
-  onColumnsChange: (columns: TableColumn[]) => void;
+  columns: PipelineColumn[];
+  onColumnsChange: (columns: PipelineColumn[]) => void;
+  onEditColumn: (oldTitle: string, newTitle: string) => void;
+  onDeleteColumn: (title: string) => void;
 }
 
 const SortableColumnItem = ({ 
   column, 
   onToggle,
+  onEdit,
+  onDelete,
   isDragging = false 
 }: { 
-  column: TableColumn; 
-  onToggle: (id: string) => void;
+  column: PipelineColumn; 
+  onToggle: (title: string) => void;
+  onEdit: (title: string) => void;
+  onDelete: (title: string) => void;
   isDragging?: boolean;
 }) => {
   const {
@@ -56,7 +55,7 @@ const SortableColumnItem = ({
     transform,
     transition,
     isDragging: isSortableDragging,
-  } = useSortable({ id: column.id });
+  } = useSortable({ id: column.title });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -72,15 +71,38 @@ const SortableColumnItem = ({
     >
       <Checkbox
         checked={column.enabled}
-        onCheckedChange={() => onToggle(column.id)}
+        onCheckedChange={() => onToggle(column.title)}
         disabled={!column.editable}
         className="w-[17.5px] h-[17.5px] border border-border-color data-[state=checked]:bg-[#006BB6] data-[state=checked]:border-[#006BB6]"
       />
       <div className="flex-1">
         <div className="text-sm font-normal text-[#334155]">
-          {column.name}
+          {column.title}
         </div>
       </div>
+      
+      {/* Action buttons */}
+      {column.editable && (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEdit(column.title)}
+            className="h-6 w-6 p-0 hover:bg-gray-100"
+          >
+            <Edit className="w-3 h-3 text-[#64748B]" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onDelete(column.title)}
+            className="h-6 w-6 p-0 hover:bg-gray-100"
+          >
+            <Trash2 className="w-3 h-3 text-[#64748B]" />
+          </Button>
+        </div>
+      )}
+      
       <div
         {...attributes}
         {...listeners}
@@ -92,7 +114,7 @@ const SortableColumnItem = ({
   );
 };
 
-const DragOverlayItem = ({ column }: { column: TableColumn | null }) => {
+const DragOverlayItem = ({ column }: { column: PipelineColumn | null }) => {
   if (!column) return null;
   
   return (
@@ -104,7 +126,7 @@ const DragOverlayItem = ({ column }: { column: TableColumn | null }) => {
       />
       <div className="flex-1">
         <div className="text-sm font-normal text-[#334155]">
-          {column.name}
+          {column.title}
         </div>
       </div>
       <div className="cursor-grab text-[#64748B] p-1">
@@ -119,9 +141,13 @@ export const TableSettingsSidebar = ({
   onOpenChange,
   columns,
   onColumnsChange,
+  onEditColumn,
+  onDeleteColumn,
 }: TableSettingsSidebarProps) => {
-  const [localColumns, setLocalColumns] = useState<TableColumn[]>(columns);
-  const [activeColumn, setActiveColumn] = useState<TableColumn | null>(null);
+  const [localColumns, setLocalColumns] = useState<PipelineColumn[]>(columns);
+  const [activeColumn, setActiveColumn] = useState<PipelineColumn | null>(null);
+  const [editingColumn, setEditingColumn] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -135,18 +161,48 @@ export const TableSettingsSidebar = ({
     setLocalColumns(columns);
   }, [columns]);
 
-  const handleToggleColumn = (columnId: string) => {
+  const handleToggleColumn = (columnTitle: string) => {
     setLocalColumns(prev => 
       prev.map(col => 
-        col.id === columnId 
+        col.title === columnTitle 
           ? { ...col, enabled: !col.enabled }
           : col
       )
     );
   };
 
+  const handleEditStart = (columnTitle: string) => {
+    setEditingColumn(columnTitle);
+    setEditingName(columnTitle);
+  };
+
+  const handleEditSave = () => {
+    if (editingColumn && editingName.trim() && editingName !== editingColumn) {
+      onEditColumn(editingColumn, editingName.trim());
+      setLocalColumns(prev => 
+        prev.map(col => 
+          col.title === editingColumn 
+            ? { ...col, title: editingName.trim() }
+            : col
+        )
+      );
+    }
+    setEditingColumn(null);
+    setEditingName("");
+  };
+
+  const handleEditCancel = () => {
+    setEditingColumn(null);
+    setEditingName("");
+  };
+
+  const handleDelete = (columnTitle: string) => {
+    onDeleteColumn(columnTitle);
+    setLocalColumns(prev => prev.filter(col => col.title !== columnTitle));
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
-    const column = localColumns.find(col => col.id === event.active.id);
+    const column = localColumns.find(col => col.title === event.active.id);
     setActiveColumn(column || null);
   };
 
@@ -159,8 +215,8 @@ export const TableSettingsSidebar = ({
     }
 
     setLocalColumns(prev => {
-      const oldIndex = prev.findIndex(col => col.id === active.id);
-      const newIndex = prev.findIndex(col => col.id === over.id);
+      const oldIndex = prev.findIndex(col => col.title === active.id);
+      const newIndex = prev.findIndex(col => col.title === over.id);
 
       const newArray = [...prev];
       const [removed] = newArray.splice(oldIndex, 1);
@@ -172,21 +228,11 @@ export const TableSettingsSidebar = ({
 
   const handleReset = () => {
     // Reset to default state - all columns enabled in original order
-    const defaultColumns: TableColumn[] = [
-      { id: "company", name: "Company", enabled: true, editable: false },
-      { id: "contacts", name: "Contacts", enabled: true, editable: true },
-      { id: "status", name: "Status", enabled: true, editable: true },
-      { id: "lastActivity", name: "Last Activity", enabled: true, editable: true },
-      { id: "signals", name: "Signals", enabled: true, editable: true },
-      { id: "tags", name: "Tags", enabled: true, editable: true },
-      { id: "industry", name: "Industry", enabled: false, editable: true },
-      { id: "leaseExpiration", name: "Lease Expiration", enabled: false, editable: true },
-      { id: "address", name: "Address", enabled: false, editable: true },
-      { id: "description", name: "Description", enabled: false, editable: true },
-      { id: "employees", name: "# of Employees", enabled: false, editable: true },
-      { id: "revenue", name: "Revenue", enabled: false, editable: true },
-      { id: "website", name: "Website", enabled: false, editable: true },
-      { id: "companyType", name: "Company Type", enabled: false, editable: true },
+    const defaultColumns: PipelineColumn[] = [
+      { title: "Lead", enabled: true, editable: false },
+      { title: "Pitching", enabled: true, editable: true },
+      { title: "Touring", enabled: true, editable: true },
+      { title: "Closed", enabled: true, editable: true },
     ];
     setLocalColumns(defaultColumns);
   };
@@ -197,29 +243,20 @@ export const TableSettingsSidebar = ({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent 
-        side="right" 
-        className="w-[496px] p-0 bg-[#F8FAFC] flex flex-col h-full"
-      >
-        {/* Header */}
-        <SheetHeader className="bg-white border-b border-[#DFE7EF] px-6 py-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <SheetTitle className="text-[17.5px] font-semibold text-[#0F172A] leading-[26.25px]">
-              Companies Table Settings
-            </SheetTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onOpenChange(false)}
-              className="w-[34px] h-[32px] p-0 border border-[#64748B] rounded-[6px] hover:bg-gray-50"
-            >
-              <X className="w-3.5 h-3.5 text-[#64748B]" />
-            </Button>
-          </div>
-        </SheetHeader>
-
-        {/* Content */}
+    <Sidebar 
+      visible={open}
+      onHide={() => onOpenChange(false)}
+      position="right"
+      style={{ width: '496px' }}
+      className="p-0 custom-sidebar"
+      header={
+        <div style={{ color: '#0F172A', fontSize: '17.5px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '26.25px', wordWrap: 'break-word' }}>
+          Companies Table Settings
+        </div>
+      }
+    >
+      <div className="h-full flex flex-col" style={{ backgroundColor: '#F8FAFC' }}>
+        {/* Content Area */}
         <div className="flex-1 px-6 py-8 overflow-y-auto">
           <div className="space-y-3">
             <div className="flex justify-between items-start">
@@ -235,16 +272,50 @@ export const TableSettingsSidebar = ({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={localColumns.map(col => col.id)}
+                  items={localColumns.map(col => col.title)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-[2px]">
                     {localColumns.map((column) => (
-                      <SortableColumnItem
-                        key={column.id}
-                        column={column}
-                        onToggle={handleToggleColumn}
-                      />
+                      <div key={column.title}>
+                        {editingColumn === column.title ? (
+                          <div className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-blue-50">
+                            <input
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleEditSave();
+                                if (e.key === 'Escape') handleEditCancel();
+                              }}
+                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleEditSave}
+                              className="h-6 w-6 p-0 text-green-600 hover:bg-green-100"
+                            >
+                              ✓
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleEditCancel}
+                              className="h-6 w-6 p-0 text-red-600 hover:bg-red-100"
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        ) : (
+                          <SortableColumnItem
+                            column={column}
+                            onToggle={handleToggleColumn}
+                            onEdit={handleEditStart}
+                            onDelete={handleDelete}
+                          />
+                        )}
+                      </div>
                     ))}
                   </div>
                 </SortableContext>
@@ -258,24 +329,27 @@ export const TableSettingsSidebar = ({
         </div>
 
         {/* Footer */}
-        <SheetFooter className="bg-white border-t border-[#DFE1E6] px-6 py-4 flex-shrink-0">
-          <div className="flex justify-end items-center gap-4 w-full">
-            <Button
-              variant="outline"
-              onClick={handleReset}
-              className="px-[17.5px] py-[10.5px] border border-[#026BB6] text-[#026BB6] text-sm font-bold rounded-[6px] hover:bg-[#026BB6]/5"
-            >
-              Reset to default
-            </Button>
-            <Button
-              onClick={handleApply}
-              className="px-[17.5px] py-[10.5px] bg-[#026BB6] text-white text-sm font-bold rounded-[6px] hover:bg-[#026BB6]/90 border border-[#026BB6]"
-            >
-              Apply
-            </Button>
-          </div>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        <div className="bg-white border-t border-[#DFE1E6] px-6 py-4 flex justify-end items-center gap-4">
+          <button 
+            onClick={handleReset}
+            className="px-[17.5px] py-[10.5px] border rounded-[6px] font-bold text-sm"
+            style={{ borderColor: '#026BB6', color: '#026BB6' }}
+          >
+            Reset to default
+          </button>
+          <button 
+            onClick={handleApply}
+            className="px-[17.5px] py-[10.5px] rounded-[6px] font-bold text-sm"
+            style={{
+              backgroundColor: '#026BB6',
+              color: '#FFFFFF',
+              border: '1px solid #026BB6'
+            }}
+          >
+            Apply
+          </button>
+        </div>
+      </div>
+    </Sidebar>
   );
 };

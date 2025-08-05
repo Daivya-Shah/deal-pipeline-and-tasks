@@ -21,9 +21,11 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 
 interface PipelineColumn {
+  id: string; // Unique identifier for drag operations
   title: string;
   enabled: boolean;
-  editable: boolean; // Lead column might not be editable
+  editable: boolean; // Controls if column can be edited
+  deletable?: boolean; // Controls if column can be deleted (optional, defaults to editable)
 }
 
 interface TableSettingsSidebarProps {
@@ -55,7 +57,7 @@ const SortableColumnItem = ({
     transform,
     transition,
     isDragging: isSortableDragging,
-  } = useSortable({ id: column.title });
+  } = useSortable({ id: column.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -77,7 +79,7 @@ const SortableColumnItem = ({
       />
       <div className="flex-1">
         <div className="text-sm font-normal text-[#334155]">
-          {column.title}
+          {column.title.startsWith('temp_column_') ? 'title' : column.title}
         </div>
       </div>
       
@@ -126,7 +128,7 @@ const DragOverlayItem = ({ column }: { column: PipelineColumn | null }) => {
       />
       <div className="flex-1">
         <div className="text-sm font-normal text-[#334155]">
-          {column.title}
+          {column.title.startsWith('temp_column_') ? 'title' : column.title}
         </div>
       </div>
       <div className="cursor-grab text-[#64748B] p-1">
@@ -148,6 +150,8 @@ export const TableSettingsSidebar = ({
   const [activeColumn, setActiveColumn] = useState<PipelineColumn | null>(null);
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const [editingName, setEditingName] = useState("");
+  const [pendingEdits, setPendingEdits] = useState<{oldTitle: string, newTitle: string}[]>([]);
+  const [pendingDeletes, setPendingDeletes] = useState<string[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -159,6 +163,8 @@ export const TableSettingsSidebar = ({
 
   useEffect(() => {
     setLocalColumns(columns);
+    setPendingEdits([]);
+    setPendingDeletes([]);
   }, [columns]);
 
   const handleToggleColumn = (columnTitle: string) => {
@@ -173,12 +179,16 @@ export const TableSettingsSidebar = ({
 
   const handleEditStart = (columnTitle: string) => {
     setEditingColumn(columnTitle);
-    setEditingName(columnTitle);
+    // For temporary columns, start with empty string so user can type a proper name
+    setEditingName(columnTitle.startsWith('temp_column_') ? '' : columnTitle);
   };
 
   const handleEditSave = () => {
     if (editingColumn && editingName.trim() && editingName !== editingColumn) {
-      onEditColumn(editingColumn, editingName.trim());
+      // Track the edit for later application
+      setPendingEdits(prev => [...prev, { oldTitle: editingColumn, newTitle: editingName.trim() }]);
+      
+      // Update local state for immediate visual feedback
       setLocalColumns(prev => 
         prev.map(col => 
           col.title === editingColumn 
@@ -197,12 +207,15 @@ export const TableSettingsSidebar = ({
   };
 
   const handleDelete = (columnTitle: string) => {
-    onDeleteColumn(columnTitle);
+    // Track the deletion for later application
+    setPendingDeletes(prev => [...prev, columnTitle]);
+    
+    // Update local state for immediate visual feedback
     setLocalColumns(prev => prev.filter(col => col.title !== columnTitle));
   };
 
   const handleDragStart = (event: DragStartEvent) => {
-    const column = localColumns.find(col => col.title === event.active.id);
+    const column = localColumns.find(col => col.id === event.active.id);
     setActiveColumn(column || null);
   };
 
@@ -215,8 +228,14 @@ export const TableSettingsSidebar = ({
     }
 
     setLocalColumns(prev => {
-      const oldIndex = prev.findIndex(col => col.title === active.id);
-      const newIndex = prev.findIndex(col => col.title === over.id);
+      const oldIndex = prev.findIndex(col => col.id === active.id);
+      const newIndex = prev.findIndex(col => col.id === over.id);
+
+      // Add error handling for invalid indices
+      if (oldIndex === -1 || newIndex === -1) {
+        console.warn('Drag operation failed: column not found', { activeId: active.id, overId: over.id });
+        return prev;
+      }
 
       const newArray = [...prev];
       const [removed] = newArray.splice(oldIndex, 1);
@@ -229,29 +248,55 @@ export const TableSettingsSidebar = ({
   const handleReset = () => {
     // Reset to default state - all columns enabled in original order
     const defaultColumns: PipelineColumn[] = [
-      { title: "Lead", enabled: true, editable: false },
-      { title: "Pitching", enabled: true, editable: true },
-      { title: "Touring", enabled: true, editable: true },
-      { title: "Closed", enabled: true, editable: true },
+      { id: "lead", title: "Lead", enabled: true, editable: true },
+      { id: "pitching", title: "Pitching", enabled: true, editable: true },
+      { id: "touring", title: "Touring", enabled: true, editable: true },
+      { id: "closed", title: "Closed", enabled: true, editable: true },
     ];
     setLocalColumns(defaultColumns);
+    setPendingEdits([]);
+    setPendingDeletes([]);
   };
 
   const handleApply = () => {
+    // Apply pending edits first
+    for (const edit of pendingEdits) {
+      onEditColumn(edit.oldTitle, edit.newTitle);
+    }
+    
+    // Apply pending deletions
+    for (const deleteTitle of pendingDeletes) {
+      onDeleteColumn(deleteTitle);
+    }
+    
+    // Apply all other changes (visibility, reordering, etc.)
     onColumnsChange(localColumns);
+    
+    // Clear pending changes
+    setPendingEdits([]);
+    setPendingDeletes([]);
+    
+    onOpenChange(false);
+  };
+
+  const handleCancel = () => {
+    // Revert local state to original columns
+    setLocalColumns(columns);
+    setPendingEdits([]);
+    setPendingDeletes([]);
     onOpenChange(false);
   };
 
   return (
     <Sidebar 
       visible={open}
-      onHide={() => onOpenChange(false)}
+      onHide={handleCancel}
       position="right"
       style={{ width: '496px' }}
       className="p-0 custom-sidebar"
       header={
         <div style={{ color: '#0F172A', fontSize: '17.5px', fontFamily: 'Inter', fontWeight: 600, lineHeight: '26.25px', wordWrap: 'break-word' }}>
-          Companies Table Settings
+          Table Settings
         </div>
       }
     >
@@ -272,17 +317,18 @@ export const TableSettingsSidebar = ({
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext
-                  items={localColumns.map(col => col.title)}
+                  items={localColumns.map(col => col.id)}
                   strategy={verticalListSortingStrategy}
                 >
                   <div className="space-y-[2px]">
                     {localColumns.map((column) => (
-                      <div key={column.title}>
+                      <div key={column.id}>
                         {editingColumn === column.title ? (
                           <div className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-blue-50">
                             <input
                               value={editingName}
                               onChange={(e) => setEditingName(e.target.value)}
+                              placeholder={editingColumn?.startsWith('temp_column_') ? 'Enter column name' : ''}
                               className="flex-1 px-2 py-1 text-sm border border-blue-300 rounded"
                               autoFocus
                               onKeyDown={(e) => {
@@ -328,27 +374,20 @@ export const TableSettingsSidebar = ({
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="bg-white border-t border-[#DFE1E6] px-6 py-4 flex justify-end items-center gap-4">
-          <button 
-            onClick={handleReset}
-            className="px-[17.5px] py-[10.5px] border rounded-[6px] font-bold text-sm"
-            style={{ borderColor: '#026BB6', color: '#026BB6' }}
-          >
-            Reset to default
-          </button>
-          <button 
-            onClick={handleApply}
-            className="px-[17.5px] py-[10.5px] rounded-[6px] font-bold text-sm"
-            style={{
-              backgroundColor: '#026BB6',
-              color: '#FFFFFF',
-              border: '1px solid #026BB6'
-            }}
-          >
-            Apply
-          </button>
-        </div>
+                  {/* Footer */}
+          <div className="bg-white border-t border-[#DFE1E6] px-6 py-4 flex justify-end items-center gap-4">
+            <button 
+              onClick={handleApply}
+              className="px-[17.5px] py-[10.5px] rounded-[6px] font-bold text-sm"
+              style={{
+                backgroundColor: '#026BB6',
+                color: '#FFFFFF',
+                border: '1px solid #026BB6'
+              }}
+            >
+              Apply
+            </button>
+          </div>
       </div>
     </Sidebar>
   );

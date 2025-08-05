@@ -46,11 +46,15 @@ interface DealCard {
 }
 
 interface PipelineColumn {
+  id: string; // Unique identifier for drag operations
   title: string;
   count: number;
   totalValue: string;
   totalSquareFootage: string;
   deals: DealCard[];
+  enabled: boolean;
+  editable: boolean;
+  deletable?: boolean; // Controls if column can be deleted (optional, defaults to editable)
 }
 
 const Badge = ({ variant, children }: { variant: 'success' | 'info' | 'default', children: React.ReactNode }) => {
@@ -1266,9 +1270,11 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
 };
 
 interface TableSettingsColumn {
+  id: string; // Unique identifier for drag operations
   title: string;
   enabled: boolean;
   editable: boolean;
+  deletable?: boolean; // Controls if column can be deleted (optional, defaults to editable)
 }
 
 export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
@@ -1277,17 +1283,20 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   const [editDrawerVisible, setEditDrawerVisible] = useState(false);
   const [settingsSidebarOpen, setSettingsSidebarOpen] = useState(false);
   const [tableSettingsColumns, setTableSettingsColumns] = useState<TableSettingsColumn[]>([
-    { title: "Lead", enabled: true, editable: false },
-    { title: "Pitching", enabled: true, editable: true },
-    { title: "Touring", enabled: true, editable: true },
-    { title: "Closed", enabled: true, editable: true },
+    { id: "lead", title: "Lead", enabled: true, editable: true },
+    { id: "pitching", title: "Pitching", enabled: true, editable: true },
+    { id: "touring", title: "Touring", enabled: true, editable: true },
+    { id: "closed", title: "Closed", enabled: true, editable: true },
   ]);
   const [pipelineData, setPipelineData] = useState<PipelineColumn[]>([
     {
+      id: "lead",
       title: "Lead",
       count: 5,
       totalValue: "$4.2M",
       totalSquareFootage: "75K SF",
+      enabled: true,
+      editable: true,
       deals: [
         {
           id: "1",
@@ -1327,10 +1336,13 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       ]
     },
     {
+      id: "pitching",
       title: "Pitching",
       count: 2,
       totalValue: "$4.2M", 
       totalSquareFootage: "75K SF",
+      enabled: true,
+      editable: true,
       deals: [
         {
           id: "9",
@@ -1353,10 +1365,13 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       ]
     },
     {
+      id: "touring",
       title: "Touring",
       count: 5,
       totalValue: "$12.7M",
-      totalSquareFootage: "250K SF", 
+      totalSquareFootage: "250K SF",
+      enabled: true,
+      editable: true, 
       deals: [
         {
           id: "11",
@@ -1406,10 +1421,13 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       ]
     },
     {
+      id: "closed",
       title: "Closed",
       count: 5,
       totalValue: "$3.7M",
       totalSquareFootage: "62K SF",
+      enabled: true,
+      editable: true,
       deals: [
         {
           id: "19",
@@ -1641,18 +1659,30 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     // Clear any existing editing state
     setEditingColumnTitle(null);
     
-    // Create a unique temporary title for the new column
+    // Create a unique temporary title and ID for the new column
     const tempTitle = `temp_column_${columnIdCounter}`;
+    const tempId = `temp_column_${columnIdCounter}`;
     const newColumn: PipelineColumn = {
+      id: tempId,
       title: tempTitle,
       count: 0,
       totalValue: "$0",
       totalSquareFootage: "0 SF",
+      enabled: true,
+      editable: true,
       deals: []
     };
     
     setPipelineData(prev => [...prev, newColumn]);
     setColumnIdCounter(prev => prev + 1);
+    
+    // Add to table settings as well
+    setTableSettingsColumns(prev => [...prev, {
+      id: tempId,
+      title: tempTitle,
+      enabled: true,
+      editable: true
+    }]);
     
     // Auto-scroll to show the new column after a short delay to ensure DOM update
     setTimeout(() => {
@@ -1688,28 +1718,34 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
         ? { ...column, title: newTitle }
         : column
     ));
-    
-    // Update the table settings columns
-    setTableSettingsColumns(prev => prev.map(col => 
-      col.title === oldTitle 
-        ? { ...col, title: newTitle }
-        : col
-    ));
   };
 
   const handleDeleteColumnFromSettings = (title: string) => {
-    // Show confirmation dialog
-    setDeleteConfirmation({
-      isOpen: true,
-      itemName: title,
-      itemType: "column",
-      onConfirm: () => {
-        // Remove from pipeline data
-        setPipelineData(prev => prev.filter(column => column.title !== title));
-        
-        // Remove from table settings columns
-        setTableSettingsColumns(prev => prev.filter(col => col.title !== title));
-      }
+    // Remove from pipeline data directly (no confirmation needed from sidebar)
+    setPipelineData(prev => prev.filter(column => column.title !== title));
+  };
+
+  const handleSettingsColumnsChange = (newColumns: TableSettingsColumn[]) => {
+    // Update the table settings columns
+    setTableSettingsColumns(newColumns);
+    
+    // Update the pipeline data to match the new settings
+    setPipelineData(prev => {
+      // Reorder columns to match the new order and update enabled/editable states
+      const reorderedColumns = newColumns
+        .map(newCol => {
+          // Find existing column by ID first, then fall back to title for backwards compatibility
+          const existingColumn = prev.find(col => col.id === newCol.id || col.title === newCol.title);
+          return existingColumn ? {
+            ...existingColumn,
+            id: newCol.id, // Update ID in case it changed
+            enabled: newCol.enabled,
+            editable: newCol.editable
+          } : null;
+        })
+        .filter(col => col !== null) as PipelineColumn[];
+      
+      return reorderedColumns;
     });
   };
 
@@ -1729,6 +1765,13 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
           ? { ...column, title: newTitle.trim() }
           : column
       ));
+      
+      // Update table settings as well
+      setTableSettingsColumns(prev => prev.map(col => 
+        col.title === currentTitle 
+          ? { ...col, title: newTitle.trim() }
+          : col
+      ));
     }
     setEditingColumnTitle(null); // Always exit edit mode after save attempt
   };
@@ -1740,6 +1783,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       itemType: "column",
       onConfirm: () => {
         setPipelineData(prev => prev.filter(column => column.title !== columnTitle));
+        setTableSettingsColumns(prev => prev.filter(col => col.title !== columnTitle));
       }
     });
   };
@@ -1851,16 +1895,18 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     }, 50);
   };
 
-  // Filter pipeline data based on search query
-  const filteredPipelineData = pipelineData.map(column => ({
-    ...column,
-    deals: column.deals.filter(deal => 
-      deal.title.toLowerCase().includes(searchQuery.toLowerCase())
-    ),
-    count: column.deals.filter(deal => 
-      deal.title.toLowerCase().includes(searchQuery.toLowerCase())
-    ).length
-  }));
+  // Filter pipeline data based on search query and enabled state
+  const filteredPipelineData = pipelineData
+    .filter(column => column.enabled) // Only show enabled columns
+    .map(column => ({
+      ...column,
+      deals: column.deals.filter(deal => 
+        deal.title.toLowerCase().includes(searchQuery.toLowerCase())
+      ),
+      count: column.deals.filter(deal => 
+        deal.title.toLowerCase().includes(searchQuery.toLowerCase())
+      ).length
+    }));
 
   return (
     <div ref={pipelineRef} className="flex flex-col gap-6" style={{ width: `${4 * 306 + 3 * 24}px` }}>
@@ -1909,7 +1955,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
             <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M2.25 15.75V11.25H1.5C1.08579 11.25 0.75 10.9142 0.75 10.5C0.75 10.0858 1.08579 9.75 1.5 9.75H4.5C4.91421 9.75 5.25 10.0858 5.25 10.5C5.25 10.9142 4.91421 11.25 4.5 11.25H3.75V15.75C3.75 16.1642 3.41421 16.5 3 16.5C2.58579 16.5 2.25 16.1642 2.25 15.75ZM8.25 15.75V9C8.25 8.58579 8.58579 8.25 9 8.25C9.41421 8.25 9.75 8.58579 9.75 9V15.75C9.75 16.1642 9.41421 16.5 9 16.5C8.58579 16.5 8.25 16.1642 8.25 15.75ZM14.25 15.75V12.75H13.5C13.0858 12.75 12.75 12.4142 12.75 12C12.75 11.5858 13.0858 11.25 13.5 11.25H16.5C16.9142 11.25 17.25 11.5858 17.25 12C17.25 12.4142 16.9142 12.75 16.5 12.75H15.75V15.75C15.75 16.1642 15.4142 16.5 15 16.5C14.5858 16.5 14.25 16.1642 14.25 15.75ZM14.25 9V2.25C14.25 1.83579 14.5858 1.5 15 1.5C15.4142 1.5 15.75 1.83579 15.75 2.25V9C15.75 9.41421 15.4142 9.75 15 9.75C14.5858 9.75 14.25 9.41421 14.25 9ZM2.25 7.5V2.25C2.25 1.83579 2.58579 1.5 3 1.5C3.41421 1.5 3.75 1.83579 3.75 2.25V7.5C3.75 7.91421 3.41421 8.25 3 8.25C2.58579 8.25 2.25 7.91421 2.25 7.5ZM8.25 2.25C8.25 1.83579 8.58579 1.5 9 1.5C9.41421 1.5 9.75 1.83579 9.75 2.25V5.25H10.5C10.9142 5.25 11.25 5.58579 11.25 6C11.25 6.41421 10.9142 6.75 10.5 6.75H7.5C7.08579 6.75 6.75 6.41421 6.75 6C6.75 5.58579 7.08579 5.25 7.5 5.25H8.25V2.25Z" fill="#006BB6"/>
             </svg>
-            Settings
+            Edit Column
           </Button>
         </div>
       </div>
@@ -1980,7 +2026,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
         open={settingsSidebarOpen}
         onOpenChange={setSettingsSidebarOpen}
         columns={tableSettingsColumns}
-        onColumnsChange={setTableSettingsColumns}
+        onColumnsChange={handleSettingsColumnsChange}
         onEditColumn={handleEditColumnFromSettings}
         onDeleteColumn={handleDeleteColumnFromSettings}
       />

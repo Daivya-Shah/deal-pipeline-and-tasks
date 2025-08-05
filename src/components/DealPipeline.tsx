@@ -1037,12 +1037,22 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
 
   // Update local editing title when column title changes
   useEffect(() => {
-    setEditingTitle(column.title);
+    // If it's a temporary column title, show "title" for editing
+    if (column.title.startsWith('temp_column_')) {
+      setEditingTitle('title');
+    } else {
+      setEditingTitle(column.title);
+    }
   }, [column.title]);
 
   const handleTitleEdit = () => {
     onStartEditColumn(column.title);
-    setEditingTitle(column.title);
+    // If it's a temporary column title, show "title" for editing
+    if (column.title.startsWith('temp_column_')) {
+      setEditingTitle('title');
+    } else {
+      setEditingTitle(column.title);
+    }
   };
 
   const handleTitleSave = () => {
@@ -1174,7 +1184,9 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
                 style={{ height: '24px', padding: '0 4px', margin: '0', boxSizing: 'border-box' }}
               />
             ) : (
-              <div className="text-base font-semibold text-[#111827] leading-6" data-column-name>{column.title}</div>
+              <div className="text-base font-semibold text-[#111827] leading-6" data-column-name>
+                {column.title.startsWith('temp_column_') ? 'title' : column.title}
+              </div>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -1450,6 +1462,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   });
   const pipelineRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
   // Handle click outside to reset angled cards
   useEffect(() => {
@@ -1605,8 +1618,19 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   };
 
   const handleAddColumn = () => {
+    // Cancel any existing focus timeout to prevent multiple columns from being focused
+    if (focusTimeoutRef.current) {
+      clearTimeout(focusTimeoutRef.current);
+      focusTimeoutRef.current = null;
+    }
+    
+    // Clear any existing editing state
+    setEditingColumnTitle(null);
+    
+    // Create a unique temporary title for the new column
+    const tempTitle = `temp_column_${columnIdCounter}`;
     const newColumn: PipelineColumn = {
-      title: "title",
+      title: tempTitle,
       count: 0,
       totalValue: "$0",
       totalSquareFootage: "0 SF",
@@ -1628,6 +1652,13 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
           left: Math.max(0, scrollLeft),
           behavior: 'smooth'
         });
+        
+        // After scrolling, start editing the new column's title
+        // Store the timeout ID so it can be cancelled if needed
+        focusTimeoutRef.current = setTimeout(() => {
+          setEditingColumnTitle(tempTitle);
+          focusTimeoutRef.current = null; // Clear the ref after execution
+        }, 500); // Wait for scroll animation to fully complete for smooth experience
       }
     }, 50);
   };

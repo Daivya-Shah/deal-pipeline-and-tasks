@@ -2,6 +2,7 @@ import { MoreHorizontal, Clock, X, User, Calendar, Edit, Trash2 } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useRef } from "react";
 import { DeleteConfirmationDialog } from "./DeleteConfirmationDialog";
+import { TableSettingsSidebar } from "./TableSettingsSidebar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -1264,10 +1265,34 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
   );
 };
 
+interface TableColumn {
+  id: string;
+  name: string;
+  enabled: boolean;
+  editable: boolean;
+}
+
 export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   const [editingColumnTitle, setEditingColumnTitle] = useState<string | null>(null);
   const [editingCard, setEditingCard] = useState<DealCard | null>(null);
   const [editDrawerVisible, setEditDrawerVisible] = useState(false);
+  const [settingsSidebarOpen, setSettingsSidebarOpen] = useState(false);
+  const [tableColumns, setTableColumns] = useState<TableColumn[]>([
+    { id: "company", name: "Company", enabled: true, editable: false },
+    { id: "contacts", name: "Contacts", enabled: true, editable: true },
+    { id: "status", name: "Status", enabled: true, editable: true },
+    { id: "lastActivity", name: "Last Activity", enabled: true, editable: true },
+    { id: "signals", name: "Signals", enabled: true, editable: true },
+    { id: "tags", name: "Tags", enabled: true, editable: true },
+    { id: "industry", name: "Industry", enabled: false, editable: true },
+    { id: "leaseExpiration", name: "Lease Expiration", enabled: false, editable: true },
+    { id: "address", name: "Address", enabled: false, editable: true },
+    { id: "description", name: "Description", enabled: false, editable: true },
+    { id: "employees", name: "# of Employees", enabled: false, editable: true },
+    { id: "revenue", name: "Revenue", enabled: false, editable: true },
+    { id: "website", name: "Website", enabled: false, editable: true },
+    { id: "companyType", name: "Company Type", enabled: false, editable: true },
+  ]);
   const [pipelineData, setPipelineData] = useState<PipelineColumn[]>([
     {
       title: "Lead",
@@ -1664,8 +1689,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   };
 
   const handleSettings = () => {
-    // Settings functionality will be implemented here
-    console.log("Settings clicked");
+    setSettingsSidebarOpen(true);
   };
 
   const handleStartEditColumn = (columnTitle: string) => {
@@ -1928,6 +1952,14 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
         onConfirm={deleteConfirmation.onConfirm}
         itemName={deleteConfirmation.itemName}
         itemType={deleteConfirmation.itemType}
+      />
+      
+      {/* Table Settings Sidebar */}
+      <TableSettingsSidebar
+        open={settingsSidebarOpen}
+        onOpenChange={setSettingsSidebarOpen}
+        columns={tableColumns}
+        onColumnsChange={setTableColumns}
       />
     </div>
   );

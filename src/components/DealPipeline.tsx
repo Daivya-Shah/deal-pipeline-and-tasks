@@ -19,11 +19,18 @@ import {
   useSensors,
   closestCenter,
   UniqueIdentifier,
+  DragOverEvent,
 } from "@dnd-kit/core";
 import {
   useDraggable,
   useDroppable,
 } from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  useSortable,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Sidebar } from 'primereact/sidebar';
 
@@ -582,6 +589,52 @@ const EditTaskDrawer = ({ card, visible, onHide, onUpdateCard }: {
   );
 };
 
+const DropIndicator = () => {
+  return (
+    <div 
+      className="transition-all duration-200 ease-in-out"
+      style={{ 
+        width: '270px', 
+        height: '140px', // Approximate card height
+        margin: '16px 0' // Same gap as between cards
+      }}
+    >
+      <div 
+        className="w-full h-full rounded-[8px] border-2 border-dashed border-blue-500 bg-blue-50 flex items-center justify-center relative overflow-hidden"
+        style={{
+          boxShadow: '0px 2px 8px rgba(59, 130, 246, 0.15)',
+        }}
+      >
+        {/* Animated background pattern */}
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-200 opacity-50 animate-pulse"></div>
+        
+        {/* Content */}
+        <div className="relative z-10 flex flex-col items-center justify-center text-blue-600">
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            className="mb-2 opacity-70"
+          >
+            <path 
+              d="M12 5V19M5 12H19" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="text-sm font-medium opacity-70">Drop here</span>
+        </div>
+        
+        {/* Subtle animation border */}
+        <div className="absolute inset-0 rounded-[8px] border-2 border-blue-400 opacity-30 animate-ping"></div>
+      </div>
+    </div>
+  );
+};
+
 const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteCard }: { 
   deal: DealCard, 
   onCardClick?: (id: string) => void, 
@@ -595,14 +648,16 @@ const DealCardComponent = ({ deal, onCardClick, showIcons, onEditCard, onDeleteC
     listeners,
     setNodeRef,
     transform,
+    transition,
     isDragging,
-  } = useDraggable({
+  } = useSortable({
     id: deal.id,
     disabled: false,
   });
 
   const style = {
-    transform: CSS.Translate.toString(transform),
+    transform: CSS.Transform.toString(transform),
+    transition,
   };
 
   // Calculate position for angled card to appear above everything
@@ -1012,11 +1067,13 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
   );
 };
 
-const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, onEditColumn, onDeleteColumn, onEditCard, onDeleteCard, isEditingColumn, onStartEditColumn, onCancelEditColumn }: { 
-  column: PipelineColumn, 
+const PipelineColumnComponent = ({ column, columnIndex, dropIndicator, onCardClick, showIcons, onAddCard, onEditColumn, onDeleteColumn, onEditCard, onDeleteCard, isEditingColumn, onStartEditColumn, onCancelEditColumn }: { 
+  column: PipelineColumn,
+  columnIndex: number,
+  dropIndicator: { columnIndex: number; cardIndex: number } | null,
   onCardClick?: (id: string) => void, 
   showIcons?: boolean, 
-  onAddCard: (columnTitle: string) => void,
+  onAddCard: (columnTitle: string, cardData?: Partial<DealCard>) => void,
   onEditColumn: (columnTitle: string) => void,
   onDeleteColumn: (columnTitle: string) => void,
   onEditCard: (cardId: string) => void,
@@ -1197,7 +1254,7 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
           <div className="flex items-center gap-2">
           <Badge variant="default">{column.count}</Badge>
             <TaskDrawer columnTitle={column.title} onAddCard={onAddCard}>
-                              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1" onClick={(e) => e.stopPropagation()}>
+                              <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1">
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_13948_4495)">
                   <path d="M6.58065 5.41935V0.580645C6.58065 0.426648 6.51947 0.278959 6.41058 0.170067C6.30169 0.0611749 6.154 0 6 0C5.846 0 5.69831 0.0611749 5.58942 0.170067C5.48053 0.278959 5.41935 0.426648 5.41935 0.580645V5.41935H0.580645C0.426648 5.41935 0.278959 5.48053 0.170067 5.58942C0.0611749 5.69831 0 5.846 0 6C0 6.154 0.0611749 6.30169 0.170067 6.41058C0.278959 6.51947 0.426648 6.58065 0.580645 6.58065H5.41935V11.4194C5.42136 11.5727 5.48318 11.7193 5.59164 11.8277C5.7001 11.9362 5.84663 11.998 6 12C6.154 12 6.30169 11.9388 6.41058 11.8299C6.51947 11.721 6.58065 11.5734 6.58065 11.4194V6.58065H11.4194C11.5734 6.58065 11.721 6.51947 11.8299 6.41058C11.9388 6.30169 12 6.154 12 6C11.998 5.84663 11.9362 5.7001 11.8277 5.59164C11.7193 5.48318 11.5727 5.42136 11.4194 5.41935H6.58065Z" fill="#111827"/>
@@ -1251,20 +1308,38 @@ const PipelineColumnComponent = ({ column, onCardClick, showIcons, onAddCard, on
         )}
       </div>
       
-      <div className="flex flex-col items-center gap-4 overflow-y-auto no-scrollbar" style={{ width: '100%', maxWidth: '100%' }}>
-        {column.deals.map((deal) => (
-          <DealCardComponent 
-            key={deal.id} 
-            deal={deal} 
-            onCardClick={onCardClick}
-            showIcons={showIcons}
-            onEditCard={onEditCard}
-            onDeleteCard={onDeleteCard}
-          />
-        ))}
-
-
-      </div>
+      <SortableContext 
+        items={column.deals.map(deal => deal.id)} 
+        strategy={verticalListSortingStrategy}
+      >
+        <div className="flex flex-col items-center gap-4 overflow-y-auto no-scrollbar" style={{ width: '100%', maxWidth: '100%' }}>
+          {column.deals.map((deal, dealIndex) => (
+            <div key={deal.id} className="w-full flex flex-col items-center">
+              {/* Show drop indicator before this card if needed */}
+              {dropIndicator && 
+               dropIndicator.columnIndex === columnIndex && 
+               dropIndicator.cardIndex === dealIndex && (
+                <DropIndicator />
+              )}
+              
+              <DealCardComponent 
+                deal={deal} 
+                onCardClick={onCardClick}
+                showIcons={showIcons}
+                onEditCard={onEditCard}
+                onDeleteCard={onDeleteCard}
+              />
+            </div>
+          ))}
+          
+          {/* Show drop indicator at the end if needed */}
+          {dropIndicator && 
+           dropIndicator.columnIndex === columnIndex && 
+           dropIndicator.cardIndex === column.deals.length && (
+            <DropIndicator />
+          )}
+        </div>
+      </SortableContext>
     </div>
   );
 };
@@ -1479,6 +1554,10 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   ]);
 
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [dropIndicator, setDropIndicator] = useState<{
+    columnIndex: number;
+    cardIndex: number;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [columnIdCounter, setColumnIdCounter] = useState(5); // Start from 5 since we have 4 initial columns
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
@@ -1558,6 +1637,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id);
+    setDropIndicator(null);
     
     // Automatically angle the card when drag starts
     const cardId = event.active.id as string;
@@ -1575,6 +1655,57 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     );
   };
 
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    
+    if (!over || !active) {
+      setDropIndicator(null);
+      return;
+    }
+
+    const overId = over.id as string;
+    const draggedCardId = active.id as string;
+
+    // Find which column and position we're hovering over
+    let targetColumnIndex = -1;
+    let targetCardIndex = -1;
+
+    // Check if we're hovering over a card
+    for (let i = 0; i < pipelineData.length; i++) {
+      const cardIndex = pipelineData[i].deals.findIndex(deal => deal.id === overId);
+      if (cardIndex !== -1) {
+        targetColumnIndex = i;
+        targetCardIndex = cardIndex;
+        break;
+      }
+    }
+
+    // If not hovering over a card, check if we're hovering over a column
+    if (targetColumnIndex === -1) {
+      targetColumnIndex = pipelineData.findIndex(col => col.title === overId);
+      if (targetColumnIndex !== -1) {
+        // When hovering over column, position at the end
+        targetCardIndex = pipelineData[targetColumnIndex].deals.length;
+      }
+    }
+
+    // Don't show indicator if we're hovering over the dragged card itself
+    if (draggedCardId === overId) {
+      setDropIndicator(null);
+      return;
+    }
+
+    // Set the drop indicator position
+    if (targetColumnIndex !== -1) {
+      setDropIndicator({
+        columnIndex: targetColumnIndex,
+        cardIndex: targetCardIndex
+      });
+    } else {
+      setDropIndicator(null);
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     
@@ -1584,7 +1715,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     }
 
     const draggedCardId = active.id as string;
-    const targetColumnTitle = over.id as string;
+    const overId = over.id as string;
 
     // Find the card being dragged
     let draggedCard: DealCard | null = null;
@@ -1601,42 +1732,93 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       }
     }
 
-    if (!draggedCard || !draggedCard.isAngled) {
+    if (!draggedCard) {
       setActiveId(null);
       return;
     }
 
-    // Find target column
-    const targetColumnIndex = pipelineData.findIndex(col => col.title === targetColumnTitle);
-    
-    if (targetColumnIndex === -1 || sourceColumnIndex === targetColumnIndex) {
+    // Check if we're dropping on another card (for positional insertion)
+    let targetColumnIndex = -1;
+    let targetCardIndex = -1;
+    let isCard = false;
+
+    // First, check if we're dropping on a card
+    for (let i = 0; i < pipelineData.length; i++) {
+      const cardIndex = pipelineData[i].deals.findIndex(deal => deal.id === overId);
+      if (cardIndex !== -1) {
+        targetColumnIndex = i;
+        targetCardIndex = cardIndex;
+        isCard = true;
+        break;
+      }
+    }
+
+    // If not dropping on a card, check if we're dropping on a column
+    if (!isCard) {
+      targetColumnIndex = pipelineData.findIndex(col => col.title === overId);
+      if (targetColumnIndex === -1) {
+        setActiveId(null);
+        return;
+      }
+      // When dropping on column, add to the end
+      targetCardIndex = pipelineData[targetColumnIndex].deals.length;
+    }
+
+    // If it's the same position, no need to move
+    if (sourceColumnIndex === targetColumnIndex && sourceCardIndex === targetCardIndex) {
       setActiveId(null);
       return;
     }
 
-    // Move the card
     setPipelineData(prevData => {
       const newData = [...prevData];
-      
-      // Remove from source column
-      newData[sourceColumnIndex] = {
-        ...newData[sourceColumnIndex],
-        deals: newData[sourceColumnIndex].deals.filter(deal => deal.id !== draggedCardId),
-        count: newData[sourceColumnIndex].count - 1
-      };
-      
-      // Add to target column (make it normal, not angled)
       const updatedCard = { ...draggedCard, isAngled: false };
-      newData[targetColumnIndex] = {
-        ...newData[targetColumnIndex],
-        deals: [...newData[targetColumnIndex].deals, updatedCard],
-        count: newData[targetColumnIndex].count + 1
-      };
+
+      if (sourceColumnIndex === targetColumnIndex) {
+        // Reordering within the same column
+        const newDeals = [...newData[sourceColumnIndex].deals];
+        
+        // Remove the card from its current position
+        newDeals.splice(sourceCardIndex, 1);
+        
+        // Insert at the new position
+        let insertIndex = targetCardIndex;
+        if (sourceCardIndex < targetCardIndex) {
+          insertIndex = targetCardIndex - 1;
+        }
+        
+        newDeals.splice(insertIndex, 0, updatedCard);
+        
+        newData[sourceColumnIndex] = {
+          ...newData[sourceColumnIndex],
+          deals: newDeals
+        };
+      } else {
+        // Moving between different columns
+        
+        // Remove from source column
+        newData[sourceColumnIndex] = {
+          ...newData[sourceColumnIndex],
+          deals: newData[sourceColumnIndex].deals.filter(deal => deal.id !== draggedCardId),
+          count: newData[sourceColumnIndex].count - 1
+        };
+        
+        // Add to target column at the specified position
+        const targetDeals = [...newData[targetColumnIndex].deals];
+        targetDeals.splice(targetCardIndex, 0, updatedCard);
+        
+        newData[targetColumnIndex] = {
+          ...newData[targetColumnIndex],
+          deals: targetDeals,
+          count: newData[targetColumnIndex].count + 1
+        };
+      }
       
       return newData;
     });
 
     setActiveId(null);
+    setDropIndicator(null);
   };
 
   const findActiveCard = (): DealCard | null => {
@@ -1965,6 +2147,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
         sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
       <div ref={scrollContainerRef} className="w-full overflow-x-auto overflow-y-visible no-scrollbar">
@@ -1973,6 +2156,8 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
               <PipelineColumnComponent 
                 key={`${column.title}-${index}`} 
                 column={column} 
+                columnIndex={index}
+                dropIndicator={dropIndicator}
                 onCardClick={handleCardClick} 
                 showIcons={showIcons} 
                 onAddCard={handleAddCard}

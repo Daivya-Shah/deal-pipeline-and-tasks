@@ -18,6 +18,7 @@ import {
   useSensor,
   useSensors,
   closestCenter,
+  closestCorners,
   UniqueIdentifier,
   DragOverEvent,
 } from "@dnd-kit/core";
@@ -589,13 +590,13 @@ const EditTaskDrawer = ({ card, visible, onHide, onUpdateCard }: {
   );
 };
 
-const DropIndicator = () => {
+const DropIndicator = ({ width = '270px', height = '140px' }: { width?: string, height?: string }) => {
   return (
     <div 
       className="transition-all duration-200 ease-in-out"
       style={{ 
-        width: '270px', 
-        height: '140px', // Approximate card height
+        width: width, 
+        height: height,
         margin: '16px 0' // Same gap as between cards
       }}
     >
@@ -969,7 +970,7 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
         boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
         outline: '1px #DFE7EF solid',
         outlineOffset: '-1px',
-        transform: 'rotate(8deg)',
+        transform: deal.isAngled ? 'rotate(8deg)' : 'none',
         transformOrigin: 'top left',
         cursor: 'grab',
         zIndex: 1000,
@@ -978,18 +979,23 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
     >
       <div className="flex items-center gap-2">
         <div className="flex-1 text-[14px] font-semibold text-[#111827]">{deal.title}</div>
-        <div>
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g clipPath="url(#clip0_13948_4497_drag)">
-              <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
-            </g>
-            <defs>
-              <clipPath id="clip0_13948_4497_drag">
-                <rect width="12" height="12" fill="white"/>
-              </clipPath>
-            </defs>
-          </svg>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="cursor-pointer focus:outline-none focus:ring-0 border-0 rounded p-1" disabled>
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_13948_4497_drag)">
+                  <path fillRule="evenodd" clipRule="evenodd" d="M6.00017 2.4C6.66291 2.4 7.20017 1.86274 7.20017 1.2C7.20017 0.537258 6.66291 0 6.00017 0C5.33743 0 4.80017 0.537258 4.80017 1.2C4.80017 1.86274 5.33743 2.4 6.00017 2.4ZM6.00017 7.20001C6.66291 7.20001 7.20017 6.66275 7.20017 6.00001C7.20017 5.33726 6.66291 4.80001 6.00017 4.80001C5.33743 4.80001 4.80017 5.33726 4.80017 6.00001C4.80017 6.66275 5.33743 7.20001 6.00017 7.20001ZM7.20017 10.8C7.20017 11.4628 6.66291 12 6.00017 12C5.33743 12 4.80017 11.4628 4.80017 10.8C4.80017 10.1373 5.33743 9.60001 6.00017 9.60001C6.66291 9.60001 7.20017 10.1373 7.20017 10.8Z" fill="#111827"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_13948_4497_drag">
+                    <rect width="12" height="12" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+            </button>
+          </DropdownMenuTrigger>
+          {/* No DropdownMenuContent to avoid any interactions during drag */}
+        </DropdownMenu>
         </div>
       
       <div className="flex items-center gap-2">
@@ -1067,10 +1073,42 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
   );
 };
 
-const PipelineColumnComponent = ({ column, columnIndex, dropIndicator, onCardClick, showIcons, onAddCard, onEditColumn, onDeleteColumn, onEditCard, onDeleteCard, isEditingColumn, onStartEditColumn, onCancelEditColumn }: { 
+const DropZoneBottom = ({ columnTitle, width = '270px', height = '140px' }: { 
+  columnTitle: string, 
+  width?: string, 
+  height?: string 
+}) => {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `${columnTitle}-drop-zone`,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      className="flex items-center justify-center transition-colors"
+      style={{
+        width: width,
+        height: height,
+        backgroundColor: isOver ? '#dbeafe' : 'transparent',
+        border: isOver ? '2px dashed #3b82f6' : '2px dashed transparent',
+        borderRadius: '8px',
+        marginTop: '8px',
+      }}
+    >
+      {isOver && (
+        <div className="text-sm text-blue-600 font-medium">
+          Drop here to add to end
+        </div>
+      )}
+    </div>
+  );
+};
+
+const PipelineColumnComponent = ({ column, columnIndex, dropIndicator, draggedCardDimensions, onCardClick, showIcons, onAddCard, onEditColumn, onDeleteColumn, onEditCard, onDeleteCard, isEditingColumn, onStartEditColumn, onCancelEditColumn }: { 
   column: PipelineColumn,
   columnIndex: number,
   dropIndicator: { columnIndex: number; cardIndex: number } | null,
+  draggedCardDimensions: { width: string, height: string } | null,
   onCardClick?: (id: string) => void, 
   showIcons?: boolean, 
   onAddCard: (columnTitle: string, cardData?: Partial<DealCard>) => void,
@@ -1312,15 +1350,18 @@ const PipelineColumnComponent = ({ column, columnIndex, dropIndicator, onCardCli
         items={column.deals.map(deal => deal.id)} 
         strategy={verticalListSortingStrategy}
       >
-        <div className="flex flex-col items-center gap-4 overflow-y-auto no-scrollbar" style={{ width: '100%', maxWidth: '100%' }}>
+        <div className="flex flex-col items-center gap-4 flex-1 overflow-y-auto no-scrollbar" style={{ width: '100%', maxWidth: '100%' }}>
           {column.deals.map((deal, dealIndex) => (
             <div key={deal.id} className="w-full flex flex-col items-center">
               {/* Show drop indicator before this card if needed */}
-              {dropIndicator && 
-               dropIndicator.columnIndex === columnIndex && 
-               dropIndicator.cardIndex === dealIndex && (
-                <DropIndicator />
-              )}
+                      {dropIndicator &&
+        dropIndicator.columnIndex === columnIndex &&
+        dropIndicator.cardIndex === dealIndex && (
+          <DropIndicator 
+            width={draggedCardDimensions?.width} 
+            height={draggedCardDimensions?.height} 
+          />
+        )}
               
               <DealCardComponent 
                 deal={deal} 
@@ -1333,11 +1374,21 @@ const PipelineColumnComponent = ({ column, columnIndex, dropIndicator, onCardCli
           ))}
           
           {/* Show drop indicator at the end if needed */}
-          {dropIndicator && 
-           dropIndicator.columnIndex === columnIndex && 
-           dropIndicator.cardIndex === column.deals.length && (
-            <DropIndicator />
-          )}
+                {dropIndicator &&
+      dropIndicator.columnIndex === columnIndex &&
+      dropIndicator.cardIndex === column.deals.length && (
+        <DropIndicator 
+          width={draggedCardDimensions?.width} 
+          height={draggedCardDimensions?.height} 
+        />
+      )}
+          
+          {/* Explicit drop zone at the bottom of the column */}
+          <DropZoneBottom 
+            columnTitle={column.title} 
+            width={draggedCardDimensions?.width} 
+            height={draggedCardDimensions?.height} 
+          />
         </div>
       </SortableContext>
     </div>
@@ -1554,6 +1605,8 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   ]);
 
   const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [originalCardState, setOriginalCardState] = useState<DealCard | null>(null);
+  const [draggedCardDimensions, setDraggedCardDimensions] = useState<{ width: string, height: string } | null>(null);
   const [dropIndicator, setDropIndicator] = useState<{
     columnIndex: number;
     cardIndex: number;
@@ -1639,8 +1692,28 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     setActiveId(event.active.id);
     setDropIndicator(null);
     
-    // Automatically angle the card when drag starts
+    // Capture the original card state and dimensions before modifying it
     const cardId = event.active.id as string;
+    
+    // Get the actual DOM element to measure its dimensions
+    const cardElement = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
+    if (cardElement) {
+      const rect = cardElement.getBoundingClientRect();
+      setDraggedCardDimensions({
+        width: `${rect.width}px`,
+        height: `${rect.height}px`
+      });
+    }
+    
+    for (const column of pipelineData) {
+      const card = column.deals.find(deal => deal.id === cardId);
+      if (card) {
+        setOriginalCardState({ ...card });
+        break;
+      }
+    }
+    
+    // Automatically angle the card when drag starts
     setPipelineData(prevData =>
       prevData.map(column => ({
         ...column,
@@ -1711,6 +1784,8 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     
     if (!over) {
       setActiveId(null);
+      setOriginalCardState(null);
+      setDraggedCardDimensions(null);
       return;
     }
 
@@ -1734,6 +1809,8 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
 
     if (!draggedCard) {
       setActiveId(null);
+      setOriginalCardState(null);
+      setDraggedCardDimensions(null);
       return;
     }
 
@@ -1753,20 +1830,35 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       }
     }
 
-    // If not dropping on a card, check if we're dropping on a column
+    // If not dropping on a card, check if we're dropping on a column or drop zone
     if (!isCard) {
+      // Check if dropping on a column
       targetColumnIndex = pipelineData.findIndex(col => col.title === overId);
+      
+      // If not on a column, check if dropping on a drop zone
+      if (targetColumnIndex === -1) {
+        // Check for drop zone format: "columnTitle-drop-zone"
+        if (overId.endsWith('-drop-zone')) {
+          const columnTitle = overId.replace('-drop-zone', '');
+          targetColumnIndex = pipelineData.findIndex(col => col.title === columnTitle);
+        }
+      }
+      
       if (targetColumnIndex === -1) {
         setActiveId(null);
+        setOriginalCardState(null);
+        setDraggedCardDimensions(null);
         return;
       }
-      // When dropping on column, add to the end
+      // When dropping on column or drop zone, add to the end
       targetCardIndex = pipelineData[targetColumnIndex].deals.length;
     }
 
     // If it's the same position, no need to move
     if (sourceColumnIndex === targetColumnIndex && sourceCardIndex === targetCardIndex) {
       setActiveId(null);
+      setOriginalCardState(null);
+      setDraggedCardDimensions(null);
       return;
     }
 
@@ -1818,6 +1910,8 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     });
 
     setActiveId(null);
+    setOriginalCardState(null);
+    setDraggedCardDimensions(null);
     setDropIndicator(null);
   };
 
@@ -2137,7 +2231,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
             <svg width="14" height="14" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M2.25 15.75V11.25H1.5C1.08579 11.25 0.75 10.9142 0.75 10.5C0.75 10.0858 1.08579 9.75 1.5 9.75H4.5C4.91421 9.75 5.25 10.0858 5.25 10.5C5.25 10.9142 4.91421 11.25 4.5 11.25H3.75V15.75C3.75 16.1642 3.41421 16.5 3 16.5C2.58579 16.5 2.25 16.1642 2.25 15.75ZM8.25 15.75V9C8.25 8.58579 8.58579 8.25 9 8.25C9.41421 8.25 9.75 8.58579 9.75 9V15.75C9.75 16.1642 9.41421 16.5 9 16.5C8.58579 16.5 8.25 16.1642 8.25 15.75ZM14.25 15.75V12.75H13.5C13.0858 12.75 12.75 12.4142 12.75 12C12.75 11.5858 13.0858 11.25 13.5 11.25H16.5C16.9142 11.25 17.25 11.5858 17.25 12C17.25 12.4142 16.9142 12.75 16.5 12.75H15.75V15.75C15.75 16.1642 15.4142 16.5 15 16.5C14.5858 16.5 14.25 16.1642 14.25 15.75ZM14.25 9V2.25C14.25 1.83579 14.5858 1.5 15 1.5C15.4142 1.5 15.75 1.83579 15.75 2.25V9C15.75 9.41421 15.4142 9.75 15 9.75C14.5858 9.75 14.25 9.41421 14.25 9ZM2.25 7.5V2.25C2.25 1.83579 2.58579 1.5 3 1.5C3.41421 1.5 3.75 1.83579 3.75 2.25V7.5C3.75 7.91421 3.41421 8.25 3 8.25C2.58579 8.25 2.25 7.91421 2.25 7.5ZM8.25 2.25C8.25 1.83579 8.58579 1.5 9 1.5C9.41421 1.5 9.75 1.83579 9.75 2.25V5.25H10.5C10.9142 5.25 11.25 5.58579 11.25 6C11.25 6.41421 10.9142 6.75 10.5 6.75H7.5C7.08579 6.75 6.75 6.41421 6.75 6C6.75 5.58579 7.08579 5.25 7.5 5.25H8.25V2.25Z" fill="#006BB6"/>
             </svg>
-            Edit Column
+            Edit column
           </Button>
         </div>
       </div>
@@ -2145,7 +2239,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       {/* Pipeline Columns */}
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={closestCorners}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
@@ -2158,6 +2252,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
                 column={column} 
                 columnIndex={index}
                 dropIndicator={dropIndicator}
+                draggedCardDimensions={draggedCardDimensions}
                 onCardClick={handleCardClick} 
                 showIcons={showIcons} 
                 onAddCard={handleAddCard}
@@ -2176,7 +2271,7 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
         <DragOverlay>
           {activeId ? (
             <DragCardComponent 
-              deal={findActiveCard() || { 
+              deal={originalCardState || { 
                 id: '', 
                 title: '', 
                 category: '', 

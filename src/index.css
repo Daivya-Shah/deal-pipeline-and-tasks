@@ -153,6 +153,24 @@ All colors MUST be HSL.
   background: transparent !important;
 }
 
+/* Style the sidebar close button to match delete modal */
+.custom-sidebar .p-sidebar-close {
+  width: 34px !important;
+  height: 32px !important;
+  border: 1px solid #64748B !important;
+  border-radius: 6px !important;
+  background: white !important;
+  color: #64748B !important;
+  padding: 10.5px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.custom-sidebar .p-sidebar-close:hover {
+  background: #f9fafb !important;
+}
+
 /* Hide native date picker icons */
 input[type="date"]::-webkit-calendar-picker-indicator {
   opacity: 0 !important;

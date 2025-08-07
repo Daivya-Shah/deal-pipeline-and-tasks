@@ -1358,7 +1358,7 @@ const PipelineColumnComponent = ({ column, columnIndex, dropIndicator, draggedCa
         dropIndicator.columnIndex === columnIndex &&
         dropIndicator.cardIndex === dealIndex && (
           <DropIndicator 
-            width={draggedCardDimensions?.width} 
+            width="270px"
             height={draggedCardDimensions?.height} 
           />
         )}
@@ -1378,7 +1378,7 @@ const PipelineColumnComponent = ({ column, columnIndex, dropIndicator, draggedCa
       dropIndicator.columnIndex === columnIndex &&
       dropIndicator.cardIndex === column.deals.length && (
         <DropIndicator 
-          width={draggedCardDimensions?.width} 
+          width="270px"
           height={draggedCardDimensions?.height} 
         />
       )}
@@ -1386,7 +1386,7 @@ const PipelineColumnComponent = ({ column, columnIndex, dropIndicator, draggedCa
           {/* Explicit drop zone at the bottom of the column */}
           <DropZoneBottom 
             columnTitle={column.title} 
-            width={draggedCardDimensions?.width} 
+            width="270px"
             height={draggedCardDimensions?.height} 
           />
         </div>
@@ -1695,14 +1695,21 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     // Capture the original card state and dimensions before modifying it
     const cardId = event.active.id as string;
     
-    // Get the actual DOM element to measure its dimensions
+    // Get the actual DOM element to measure its height in normal (non-tilted) state
     const cardElement = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
     if (cardElement) {
+      // Temporarily remove any rotation to get the normal height
+      const originalTransform = cardElement.style.transform;
+      cardElement.style.transform = 'none';
+      
       const rect = cardElement.getBoundingClientRect();
       setDraggedCardDimensions({
-        width: `${rect.width}px`,
-        height: `${rect.height}px`
+        width: '270px', // Always use consistent width
+        height: `${rect.height}px` // Use normal (non-tilted) card height
       });
+      
+      // Restore the original transform
+      cardElement.style.transform = originalTransform;
     }
     
     for (const column of pipelineData) {
@@ -1764,6 +1771,26 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
 
     // Don't show indicator if we're hovering over the dragged card itself
     if (draggedCardId === overId) {
+      setDropIndicator(null);
+      return;
+    }
+
+    // Find the original position of the dragged card to exclude drop indicators around it
+    let draggedCardOriginalColumn = -1;
+    let draggedCardOriginalIndex = -1;
+    for (let i = 0; i < pipelineData.length; i++) {
+      const cardIndex = pipelineData[i].deals.findIndex(deal => deal.id === draggedCardId);
+      if (cardIndex !== -1) {
+        draggedCardOriginalColumn = i;
+        draggedCardOriginalIndex = cardIndex;
+        break;
+      }
+    }
+
+    // Don't show drop indicators around the original position of the dragged card
+    if (targetColumnIndex === draggedCardOriginalColumn && 
+        (targetCardIndex === draggedCardOriginalIndex || 
+         targetCardIndex === draggedCardOriginalIndex + 1)) {
       setDropIndicator(null);
       return;
     }

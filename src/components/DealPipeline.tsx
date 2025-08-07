@@ -1628,6 +1628,40 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const focusTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   
+  // Handle scroll to reset angled cards
+  useEffect(() => {
+    const handleScroll = () => {
+      // Reset all angled cards when scrolling
+      setPipelineData(prevData =>
+        prevData.map(column => ({
+          ...column,
+          deals: column.deals.map(deal => ({
+            ...deal,
+            isAngled: false
+          }))
+        }))
+      );
+    };
+
+    const scrollContainer = scrollContainerRef.current;
+
+    // Listen for scroll events on the pipeline container with capture to catch all scroll events 
+    // (both horizontal pipeline scroll and vertical column scrolls)
+    if (scrollContainer) {
+      scrollContainer.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    }
+
+    // Also listen for window scroll events
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      if (scrollContainer) {
+        scrollContainer.removeEventListener('scroll', handleScroll, true);
+      }
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   // Handle click outside to reset angled cards
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

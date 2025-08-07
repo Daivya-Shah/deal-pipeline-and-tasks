@@ -63,17 +63,21 @@ const SortableColumnItem = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isSortableDragging ? 'none' : transition,
-    opacity: isSortableDragging ? 0 : 1,
-    visibility: isSortableDragging ? 'hidden' : 'visible',
-    zIndex: isSortableDragging ? 999 : 'auto',
+    transition: isSortableDragging ? 'none' : 'all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
+    opacity: isSortableDragging ? 0.4 : 1,
+    scale: isSortableDragging ? '1.02' : '1',
+    zIndex: isSortableDragging ? 1000 : 'auto',
   } as React.CSSProperties;
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] hover:bg-gray-50"
+      className={`flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] transition-all duration-200 ease-out ${
+        isSortableDragging 
+          ? 'bg-blue-50 shadow-lg ring-2 ring-blue-200' 
+          : 'hover:bg-gray-50 hover:shadow-sm'
+      }`}
     >
       <Checkbox
         checked={column.enabled}
@@ -125,12 +129,13 @@ const DragOverlayItem = ({ column }: { column: PipelineColumn | null }) => {
   
   return (
     <div 
-      className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-white border border-[#E2E8F0]"
+      className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-white border border-blue-200 ring-2 ring-blue-100 backdrop-blur-sm"
       style={{
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        transform: 'rotate(2deg)',
+        boxShadow: '0 20px 40px -10px rgba(0, 0, 0, 0.15), 0 8px 16px -4px rgba(0, 0, 0, 0.1)',
         cursor: 'grabbing',
         zIndex: 1000,
+        scale: '1.03',
+        opacity: '0.95',
       }}
     >
       <Checkbox
@@ -188,14 +193,14 @@ export const TableSettingsSidebar = ({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
-        tolerance: 5,
+        distance: 3,
+        tolerance: 2,
       },
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 250,
-        tolerance: 5,
+        delay: 150,
+        tolerance: 3,
       },
     })
   );
@@ -359,7 +364,7 @@ export const TableSettingsSidebar = ({
                   items={localColumns.map(col => col.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="space-y-[2px]">
+                  <div className="space-y-[2px] transition-all duration-200 ease-out">
                     {localColumns.map((column) => (
                       <div key={column.id}>
                         {editingColumn === column.title ? (

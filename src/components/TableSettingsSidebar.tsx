@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { X, GripVertical, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -9,11 +9,9 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
-  TouchSensor,
   useSensor,
   useSensors,
   closestCenter,
-  DragOverEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -63,11 +61,9 @@ const SortableColumnItem = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isSortableDragging ? 'none' : transition,
-    opacity: isSortableDragging ? 0 : 1,
-    visibility: isSortableDragging ? 'hidden' : 'visible',
-    zIndex: isSortableDragging ? 999 : 'auto',
-  } as React.CSSProperties;
+    transition,
+    opacity: isSortableDragging ? 0.5 : 1,
+  };
 
   return (
     <div
@@ -124,15 +120,7 @@ const DragOverlayItem = ({ column }: { column: PipelineColumn | null }) => {
   if (!column) return null;
   
   return (
-    <div 
-      className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-white border border-[#E2E8F0]"
-      style={{
-        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-        transform: 'rotate(2deg)',
-        cursor: 'grabbing',
-        zIndex: 1000,
-      }}
-    >
+    <div className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-white shadow-lg border border-[#E2E8F0]">
       <Checkbox
         checked={column.enabled}
         disabled={!column.editable}
@@ -143,27 +131,7 @@ const DragOverlayItem = ({ column }: { column: PipelineColumn | null }) => {
           {column.title.startsWith('temp_column_') ? 'title' : column.title}
         </div>
       </div>
-      {column.editable && (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hover:bg-gray-100"
-            disabled
-          >
-            <Edit className="w-3 h-3 text-[#64748B]" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hover:bg-gray-100"
-            disabled
-          >
-            <Trash2 className="w-3 h-3 text-[#64748B]" />
-          </Button>
-        </div>
-      )}
-      <div className="cursor-grabbing text-[#64748B] p-1">
+      <div className="cursor-grab text-[#64748B] p-1">
         <GripVertical className="w-3.5 h-3.5" />
       </div>
     </div>
@@ -184,20 +152,11 @@ export const TableSettingsSidebar = ({
   const [editingName, setEditingName] = useState("");
   const [pendingEdits, setPendingEdits] = useState<{oldTitle: string, newTitle: string}[]>([]);
   const [pendingDeletes, setPendingDeletes] = useState<string[]>([]);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const autoScrollIntervalRef = useRef<number | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5,
-        tolerance: 5,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 250,
-        tolerance: 5,
+        distance: 8,
       },
     })
   );
@@ -255,67 +214,6 @@ export const TableSettingsSidebar = ({
     setLocalColumns(prev => prev.filter(col => col.title !== columnTitle));
   };
 
-  // Auto-scroll functionality
-  const startAutoScroll = (direction: 'up' | 'down') => {
-    if (autoScrollIntervalRef.current) return;
-
-    const scroll = () => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
-
-      const scrollSpeed = 8;
-      if (direction === 'up') {
-        container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed);
-      } else {
-        container.scrollTop = Math.min(
-          container.scrollHeight - container.clientHeight,
-          container.scrollTop + scrollSpeed
-        );
-      }
-    };
-
-    scroll();
-    autoScrollIntervalRef.current = window.setInterval(scroll, 16);
-  };
-
-  const stopAutoScroll = () => {
-    if (autoScrollIntervalRef.current) {
-      clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
-    }
-  };
-
-  const handleDragOver = (event: DragOverEvent) => {
-    const container = scrollContainerRef.current;
-    if (!container || !activeColumn) return;
-
-    // Get mouse position from the delta which tracks mouse movement
-    const containerRect = container.getBoundingClientRect();
-    const scrollZone = 50; // pixels from edge to trigger scroll
-    
-    // Calculate mouse position based on container bounds and delta
-    const deltaY = event.delta.y;
-    const activatorEvent = event.activatorEvent as MouseEvent | TouchEvent;
-    let mouseY = 0;
-    
-    if ('clientY' in activatorEvent) {
-      mouseY = activatorEvent.clientY;
-    } else if ('touches' in activatorEvent && activatorEvent.touches.length > 0) {
-      mouseY = activatorEvent.touches[0].clientY;
-    }
-
-    const relativeY = mouseY - containerRect.top;
-
-    if (relativeY < scrollZone && container.scrollTop > 0) {
-      startAutoScroll('up');
-    } else if (relativeY > containerRect.height - scrollZone && 
-               container.scrollTop < container.scrollHeight - container.clientHeight) {
-      startAutoScroll('down');
-    } else {
-      stopAutoScroll();
-    }
-  };
-
   const handleDragStart = (event: DragStartEvent) => {
     const column = localColumns.find(col => col.id === event.active.id);
     setActiveColumn(column || null);
@@ -324,7 +222,6 @@ export const TableSettingsSidebar = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveColumn(null);
-    stopAutoScroll(); // Stop auto-scroll when drag ends
 
     if (!over || active.id === over.id) {
       return;
@@ -405,7 +302,7 @@ export const TableSettingsSidebar = ({
     >
       <div className="h-full flex flex-col" style={{ backgroundColor: '#F8FAFC' }}>
         {/* Content Area */}
-        <div ref={scrollContainerRef} className="flex-1 px-6 py-8 overflow-y-auto">
+        <div className="flex-1 px-6 py-8 overflow-y-auto">
           <div className="space-y-3">
             <div className="flex justify-between items-start">
               <div className="text-sm font-semibold text-[#0F172A]">Columns</div>
@@ -417,7 +314,6 @@ export const TableSettingsSidebar = ({
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext

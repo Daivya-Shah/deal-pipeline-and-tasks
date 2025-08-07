@@ -9,11 +9,9 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
-  TouchSensor,
   useSensor,
   useSensors,
   closestCenter,
-  DragOverEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -63,21 +61,15 @@ const SortableColumnItem = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition: isSortableDragging ? 'none' : 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition,
     opacity: isSortableDragging ? 0.5 : 1,
-    scale: isSortableDragging ? '0.98' : '1',
-    zIndex: isSortableDragging ? 1000 : 'auto',
-  } as React.CSSProperties;
+  };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] transition-all duration-200 ease-out ${
-        isSortableDragging 
-          ? 'bg-blue-50 shadow-lg ring-2 ring-blue-200' 
-          : 'hover:bg-gray-50 hover:shadow-sm'
-      }`}
+      className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] hover:bg-gray-50"
     >
       <Checkbox
         checked={column.enabled}
@@ -128,50 +120,18 @@ const DragOverlayItem = ({ column }: { column: PipelineColumn | null }) => {
   if (!column) return null;
   
   return (
-    <div 
-      className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-white border-2 border-blue-300 shadow-2xl"
-      style={{
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 12px 24px -8px rgba(0, 0, 0, 0.15)',
-        cursor: 'grabbing',
-        zIndex: 9999,
-        transform: 'scale(1.05) rotate(3deg)',
-        opacity: 1,
-        pointerEvents: 'none',
-        position: 'fixed',
-        willChange: 'transform',
-      }}
-    >
+    <div className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-white shadow-lg border border-[#E2E8F0]">
       <Checkbox
         checked={column.enabled}
         disabled={!column.editable}
-        className="w-[17.5px] h-[17.5px] border border-border-color data-[state=checked]:bg-[#006BB6] data-[state=checked]:border-[#006BB6] pointer-events-none"
+        className="w-[17.5px] h-[17.5px] border border-border-color data-[state=checked]:bg-[#006BB6] data-[state=checked]:border-[#006BB6]"
       />
       <div className="flex-1">
         <div className="text-sm font-normal text-[#334155]">
           {column.title.startsWith('temp_column_') ? 'title' : column.title}
         </div>
       </div>
-      {column.editable && (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hover:bg-gray-100 pointer-events-none"
-            disabled
-          >
-            <Edit className="w-3 h-3 text-[#64748B]" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-6 w-6 p-0 hover:bg-gray-100 pointer-events-none"
-            disabled
-          >
-            <Trash2 className="w-3 h-3 text-[#64748B]" />
-          </Button>
-        </div>
-      )}
-      <div className="cursor-grabbing text-[#64748B] p-1 pointer-events-none">
+      <div className="cursor-grab text-[#64748B] p-1">
         <GripVertical className="w-3.5 h-3.5" />
       </div>
     </div>
@@ -196,14 +156,7 @@ export const TableSettingsSidebar = ({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 3,
-        tolerance: 2,
-      },
-    }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 150,
-        tolerance: 3,
+        distance: 8,
       },
     })
   );
@@ -367,7 +320,7 @@ export const TableSettingsSidebar = ({
                   items={localColumns.map(col => col.id)}
                   strategy={verticalListSortingStrategy}
                 >
-                  <div className="space-y-[2px] transition-all duration-200 ease-out">
+                  <div className="space-y-[2px]">
                     {localColumns.map((column) => (
                       <div key={column.id}>
                         {editingColumn === column.title ? (

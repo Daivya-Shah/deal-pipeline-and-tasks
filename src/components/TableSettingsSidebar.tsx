@@ -9,9 +9,11 @@ import {
   DragOverlay,
   DragStartEvent,
   PointerSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   closestCenter,
+  DragOverEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -61,9 +63,11 @@ const SortableColumnItem = ({
 
   const style = {
     transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isSortableDragging ? 0.5 : 1,
-  };
+    transition: isSortableDragging ? 'none' : transition,
+    opacity: isSortableDragging ? 0 : 1,
+    visibility: isSortableDragging ? 'hidden' : 'visible',
+    zIndex: isSortableDragging ? 999 : 'auto',
+  } as React.CSSProperties;
 
   return (
     <div
@@ -120,7 +124,15 @@ const DragOverlayItem = ({ column }: { column: PipelineColumn | null }) => {
   if (!column) return null;
   
   return (
-    <div className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-white shadow-lg border border-[#E2E8F0]">
+    <div 
+      className="flex items-center gap-[7px] px-[10.5px] py-[7px] rounded-[4px] bg-white border border-[#E2E8F0]"
+      style={{
+        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+        transform: 'rotate(2deg)',
+        cursor: 'grabbing',
+        zIndex: 1000,
+      }}
+    >
       <Checkbox
         checked={column.enabled}
         disabled={!column.editable}
@@ -131,7 +143,27 @@ const DragOverlayItem = ({ column }: { column: PipelineColumn | null }) => {
           {column.title.startsWith('temp_column_') ? 'title' : column.title}
         </div>
       </div>
-      <div className="cursor-grab text-[#64748B] p-1">
+      {column.editable && (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 hover:bg-gray-100"
+            disabled
+          >
+            <Edit className="w-3 h-3 text-[#64748B]" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0 hover:bg-gray-100"
+            disabled
+          >
+            <Trash2 className="w-3 h-3 text-[#64748B]" />
+          </Button>
+        </div>
+      )}
+      <div className="cursor-grabbing text-[#64748B] p-1">
         <GripVertical className="w-3.5 h-3.5" />
       </div>
     </div>
@@ -156,7 +188,14 @@ export const TableSettingsSidebar = ({
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 8,
+        distance: 5,
+        tolerance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 250,
+        tolerance: 5,
       },
     })
   );

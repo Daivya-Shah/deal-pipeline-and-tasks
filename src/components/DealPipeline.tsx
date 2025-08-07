@@ -1695,14 +1695,21 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     // Capture the original card state and dimensions before modifying it
     const cardId = event.active.id as string;
     
-    // Get the actual DOM element to measure its dimensions
+    // Get the actual DOM element to measure its height in normal (non-tilted) state
     const cardElement = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
     if (cardElement) {
+      // Temporarily remove any rotation to get the normal height
+      const originalTransform = cardElement.style.transform;
+      cardElement.style.transform = 'none';
+      
       const rect = cardElement.getBoundingClientRect();
       setDraggedCardDimensions({
-        width: `${rect.width}px`,
-        height: `${rect.height}px`
+        width: '270px', // Always use consistent width
+        height: `${rect.height}px` // Use normal (non-tilted) card height
       });
+      
+      // Restore the original transform
+      cardElement.style.transform = originalTransform;
     }
     
     for (const column of pipelineData) {

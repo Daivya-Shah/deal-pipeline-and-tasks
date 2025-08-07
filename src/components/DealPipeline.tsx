@@ -610,13 +610,13 @@ const DropIndicator = ({ width = '270px', height = '140px' }: { width?: string, 
         <div className="absolute inset-0 bg-gradient-to-br from-blue-100 to-blue-200 opacity-50 animate-pulse"></div>
         
         {/* Content */}
-        <div className="relative z-10 flex flex-col items-center justify-center text-blue-600">
+        <div className="relative z-10 flex items-center justify-center text-blue-600">
           <svg 
             width="24" 
             height="24" 
             viewBox="0 0 24 24" 
             fill="none" 
-            className="mb-2 opacity-70"
+            className="opacity-70"
           >
             <path 
               d="M12 5V19M5 12H19" 
@@ -626,7 +626,7 @@ const DropIndicator = ({ width = '270px', height = '140px' }: { width?: string, 
               strokeLinejoin="round"
             />
           </svg>
-          <span className="text-sm font-medium opacity-70">Drop here</span>
+
         </div>
         
         {/* Subtle animation border */}
@@ -1096,8 +1096,22 @@ const DropZoneBottom = ({ columnTitle, width = '270px', height = '140px' }: {
       }}
     >
       {isOver && (
-        <div className="text-sm text-blue-600 font-medium">
-          Drop here to add to end
+        <div className="flex items-center justify-center text-blue-600">
+          <svg 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            className="opacity-70"
+          >
+            <path 
+              d="M12 5V19M5 12H19" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            />
+          </svg>
         </div>
       )}
     </div>

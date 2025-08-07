@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { X, GripVertical, Edit, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -184,8 +184,6 @@ export const TableSettingsSidebar = ({
   const [editingName, setEditingName] = useState("");
   const [pendingEdits, setPendingEdits] = useState<{oldTitle: string, newTitle: string}[]>([]);
   const [pendingDeletes, setPendingDeletes] = useState<string[]>([]);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const autoScrollIntervalRef = useRef<number | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -255,67 +253,6 @@ export const TableSettingsSidebar = ({
     setLocalColumns(prev => prev.filter(col => col.title !== columnTitle));
   };
 
-  // Auto-scroll functionality
-  const startAutoScroll = (direction: 'up' | 'down') => {
-    if (autoScrollIntervalRef.current) return;
-
-    const scroll = () => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
-
-      const scrollSpeed = 8;
-      if (direction === 'up') {
-        container.scrollTop = Math.max(0, container.scrollTop - scrollSpeed);
-      } else {
-        container.scrollTop = Math.min(
-          container.scrollHeight - container.clientHeight,
-          container.scrollTop + scrollSpeed
-        );
-      }
-    };
-
-    scroll();
-    autoScrollIntervalRef.current = window.setInterval(scroll, 16);
-  };
-
-  const stopAutoScroll = () => {
-    if (autoScrollIntervalRef.current) {
-      clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
-    }
-  };
-
-  const handleDragOver = (event: DragOverEvent) => {
-    const container = scrollContainerRef.current;
-    if (!container || !activeColumn) return;
-
-    // Get mouse position from the delta which tracks mouse movement
-    const containerRect = container.getBoundingClientRect();
-    const scrollZone = 50; // pixels from edge to trigger scroll
-    
-    // Calculate mouse position based on container bounds and delta
-    const deltaY = event.delta.y;
-    const activatorEvent = event.activatorEvent as MouseEvent | TouchEvent;
-    let mouseY = 0;
-    
-    if ('clientY' in activatorEvent) {
-      mouseY = activatorEvent.clientY;
-    } else if ('touches' in activatorEvent && activatorEvent.touches.length > 0) {
-      mouseY = activatorEvent.touches[0].clientY;
-    }
-
-    const relativeY = mouseY - containerRect.top;
-
-    if (relativeY < scrollZone && container.scrollTop > 0) {
-      startAutoScroll('up');
-    } else if (relativeY > containerRect.height - scrollZone && 
-               container.scrollTop < container.scrollHeight - container.clientHeight) {
-      startAutoScroll('down');
-    } else {
-      stopAutoScroll();
-    }
-  };
-
   const handleDragStart = (event: DragStartEvent) => {
     const column = localColumns.find(col => col.id === event.active.id);
     setActiveColumn(column || null);
@@ -324,7 +261,6 @@ export const TableSettingsSidebar = ({
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveColumn(null);
-    stopAutoScroll(); // Stop auto-scroll when drag ends
 
     if (!over || active.id === over.id) {
       return;
@@ -405,7 +341,7 @@ export const TableSettingsSidebar = ({
     >
       <div className="h-full flex flex-col" style={{ backgroundColor: '#F8FAFC' }}>
         {/* Content Area */}
-        <div ref={scrollContainerRef} className="flex-1 px-6 py-8 overflow-y-auto">
+        <div className="flex-1 px-6 py-8 overflow-y-auto">
           <div className="space-y-3">
             <div className="flex justify-between items-start">
               <div className="text-sm font-semibold text-[#0F172A]">Columns</div>
@@ -417,7 +353,6 @@ export const TableSettingsSidebar = ({
                 sensors={sensors}
                 collisionDetection={closestCenter}
                 onDragStart={handleDragStart}
-                onDragOver={handleDragOver}
                 onDragEnd={handleDragEnd}
               >
                 <SortableContext

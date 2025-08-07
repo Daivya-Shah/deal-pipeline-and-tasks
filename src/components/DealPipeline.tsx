@@ -970,7 +970,7 @@ const DragCardComponent = ({ deal, showIcons }: { deal: DealCard, showIcons?: bo
         boxShadow: '0px 2px 8px rgba(0, 0, 0, 0.06)',
         outline: '1px #DFE7EF solid',
         outlineOffset: '-1px',
-        transform: deal.isAngled ? 'rotate(8deg)' : 'none',
+        transform: 'rotate(8deg)',
         transformOrigin: 'top left',
         cursor: 'grab',
         zIndex: 1000,
@@ -1661,6 +1661,28 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Handle scroll to reset angled cards
+  useEffect(() => {
+    const handleScroll = () => {
+      // Reset all angled cards when scrolling
+      setPipelineData(prevData =>
+        prevData.map(column => ({
+          ...column,
+          deals: column.deals.map(deal => ({ ...deal, isAngled: false }))
+        }))
+      );
+    };
+
+    // Listen to all scroll events on the document to catch any scrolling
+    document.addEventListener('scroll', handleScroll, true); // Use capture phase
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      document.removeEventListener('scroll', handleScroll, true);
+      window.removeEventListener('scroll', handleScroll);
     };
   }, []);
   

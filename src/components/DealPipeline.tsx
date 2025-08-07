@@ -1677,6 +1677,46 @@ export default function DealPipeline({ showIcons }: { showIcons?: boolean }) {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // Handle scroll to reset angled cards
+  useEffect(() => {
+    const handleScroll = () => {
+      // Reset all angled cards when scrolling, but preserve the dragged card's shadow
+      setPipelineData(prevData =>
+        prevData.map(column => ({
+          ...column,
+          deals: column.deals.map(deal => {
+            // Don't reset the currently dragged card - keep its shadow
+            if (activeId && deal.id === activeId) {
+              return deal;
+            }
+            return { ...deal, isAngled: false };
+          })
+        }))
+      );
+    };
+
+    // Listen for window scroll (page scroll)
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Listen for horizontal scroll in the main container
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    
+    // Listen for scroll events on individual columns (with capture to catch all column scrolls)
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.addEventListener('scroll', handleScroll, { passive: true, capture: true });
+    }
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.removeEventListener('scroll', handleScroll);
+        scrollContainerRef.current.removeEventListener('scroll', handleScroll, true);
+      }
+    };
+  }, [activeId]);
   
   const sensors = useSensors(
     useSensor(PointerSensor, {

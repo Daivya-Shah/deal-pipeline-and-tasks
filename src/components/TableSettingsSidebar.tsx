@@ -65,8 +65,9 @@ const SortableColumnItem = ({
     transform: CSS.Transform.toString(transform),
     transition: isSortableDragging ? 'none' : transition,
     opacity: isSortableDragging ? 0 : 1,
-    visibility: isSortableDragging ? 'hidden' : 'visible',
-    zIndex: isSortableDragging ? 999 : 'auto',
+    pointerEvents: isSortableDragging ? 'none' : 'auto',
+    position: isSortableDragging ? 'absolute' : 'relative',
+    zIndex: isSortableDragging ? -1 : 'auto',
   } as React.CSSProperties;
 
   return (
